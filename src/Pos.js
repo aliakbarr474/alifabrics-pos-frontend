@@ -185,7 +185,7 @@ export default function Pos() {
                 })
             });
 
-            if (response.ok) {s
+            if (response.ok) {
                 const data = await response.json();
                 setCurrentSaleId(data.saleId);
                 setCurrentInvoice(data.invoiceNumber);
