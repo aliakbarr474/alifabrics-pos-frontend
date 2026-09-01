@@ -25,7 +25,7 @@ export default function Accounts() {
     const [payments, setPayments] = useState([]);
 
     useEffect(() => {
-        fetch('http://alifabrics-pos-backend-production.up.railway.app/vendors')
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setVendorList(data);
@@ -36,7 +36,7 @@ export default function Accounts() {
 
     const fetchPayments = async () => {
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/get-payments');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-payments');
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const result = await response.json();
@@ -63,7 +63,7 @@ export default function Accounts() {
         if (!selectedVendor) return alert('Select a valid vendor');
 
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/add-payment', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

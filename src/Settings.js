@@ -29,7 +29,7 @@ export default function Settings() {
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/api/users');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/users');
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data);
@@ -39,7 +39,7 @@ export default function Settings() {
 
     const fetchBankAccounts = async () => {
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/bank-accounts');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts');
             if (response.ok) {
                 const data = await response.json();
                 setBankAccounts(data);
@@ -58,7 +58,7 @@ export default function Settings() {
     const handleSave = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/api/settings/brand', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/settings/brand', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ storeName, address, phone, currency }),
@@ -78,7 +78,7 @@ export default function Settings() {
         if (!newUsername || !newPassword) return;
 
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/register', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: newUsername, password: newPassword }),
@@ -105,7 +105,7 @@ export default function Settings() {
         if (!confirmDelete) return;
 
         try {
-            const response = await fetch(`http://alifabrics-pos-backend-production.up.railway.app/api/users/${userId}`, {
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/users/${userId}`, {
                 method: 'DELETE',
             });
 
@@ -130,7 +130,7 @@ export default function Settings() {
     };
 
     const handleDownloadBackup = () => {
-        window.open(`http://alifabrics-pos-backend-production.up.railway.app/api/backup?table=${selectedTable}`, '_blank');
+        window.open(`https://alifabrics-pos-backend-production.up.railway.app/api/backup?table=${selectedTable}`, '_blank');
     };
 
     const handleQrUpload = (e) => {
@@ -149,7 +149,7 @@ export default function Settings() {
         if (!newBankName || !newAccountTitle || !newAccountNumber) return;
 
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -178,7 +178,7 @@ export default function Settings() {
 
     const handleToggleBankStatus = async (id, currentStatus) => {
         try {
-            const response = await fetch(`http://alifabrics-pos-backend-production.up.railway.app/bank-accounts/${id}/toggle`, {
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/bank-accounts/${id}/toggle`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ is_active: !currentStatus })

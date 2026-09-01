@@ -26,21 +26,21 @@ export default function Pos() {
     const [currentInvoice, setCurrentInvoice] = useState(null);
 
     const fetchInventory = () => {
-        fetch('http://alifabrics-pos-backend-production.up.railway.app/inventory')
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory')
             .then(res => res.json())
             .then(data => setProducts(data))
             .catch(err => {});
     };
 
     const fetchCustomers = () => {
-        fetch('http://alifabrics-pos-backend-production.up.railway.app/customers')
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/customers')
             .then(res => res.json())
             .then(data => setCustomers(data))
             .catch(err => {});
     };
 
     const fetchActiveBankAccounts = () => {
-        fetch('http://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active')
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active')
             .then(res => res.json())
             .then(data => {
                 setActiveBankAccounts(data);
@@ -169,7 +169,7 @@ export default function Pos() {
         }
 
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/checkout', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -185,7 +185,7 @@ export default function Pos() {
                 })
             });
 
-            if (response.ok) {
+            if (response.ok) {s
                 const data = await response.json();
                 setCurrentSaleId(data.saleId);
                 setCurrentInvoice(data.invoiceNumber);

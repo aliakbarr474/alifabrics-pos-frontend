@@ -23,7 +23,7 @@ export default function Customers() {
 
     const fetchCustomers = async () => {
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/customers');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/customers');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             setCustomers(data);
@@ -44,7 +44,7 @@ export default function Customers() {
         if (!historyData[customer.id]) {
             setHistoryLoading(true);
             try {
-                const response = await fetch(`http://alifabrics-pos-backend-production.up.railway.app/customers/${customer.id}/history`);
+                const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/customers/${customer.id}/history`);
                 if (!response.ok) throw new Error('Failed to fetch history');
                 const data = await response.json();
 
@@ -84,7 +84,7 @@ export default function Customers() {
         if (!paymentAmount) return alert("Missing: Amount");
 
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/add-customer-payment', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-customer-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

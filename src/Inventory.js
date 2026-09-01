@@ -47,7 +47,7 @@ export default function Inventory() {
 
     const fetchInventory = async () => {
         try {
-            const res = await fetch('http://alifabrics-pos-backend-production.up.railway.app/inventory');
+            const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory');
             const data = await res.json();
             if (Array.isArray(data)) {
                 setInventoryData(data);
@@ -60,7 +60,7 @@ export default function Inventory() {
     };
 
     useEffect(() => {
-        fetch('http://alifabrics-pos-backend-production.up.railway.app/vendors')
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setVendorList(data);
@@ -75,7 +75,7 @@ export default function Inventory() {
             .map((name, i) => ({ id: `fallback-${i}`, name }));
 
         if (selectedVendor && !isNewVendor) {
-            fetch(`http://alifabrics-pos-backend-production.up.railway.app/vendors/${encodeURIComponent(selectedVendor)}/brands`)
+            fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${encodeURIComponent(selectedVendor)}/brands`)
                 .then(res => res.json())
                 .then(data => {
                     if (Array.isArray(data) && data.length > 0) {
@@ -166,7 +166,7 @@ export default function Inventory() {
         setProductHistory([]);
 
         try {
-            const response = await fetch(`http://alifabrics-pos-backend-production.up.railway.app/inventory/${item.id}/history`);
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${item.id}/history`);
             if (response.ok) {
                 const historyData = await response.json();
                 setProductHistory(historyData);
@@ -224,7 +224,7 @@ export default function Inventory() {
         }
 
         try {
-            const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/add-product', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-product', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -248,7 +248,7 @@ export default function Inventory() {
                 toggleAddClick(false);
                 fetchInventory();
                 
-                fetch('http://alifabrics-pos-backend-production.up.railway.app/vendors')
+                fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
                     .then(res => res.json())
                     .then(data => {
                         if (Array.isArray(data)) setVendorList(data);

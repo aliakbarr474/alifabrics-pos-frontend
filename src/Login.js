@@ -17,7 +17,7 @@ const Login = () => {
     setLoginError('');
 
     try {
-      const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/login', {
+      const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -44,7 +44,7 @@ const Login = () => {
     setSignupError('');
 
     try {
-      const response = await fetch('http://alifabrics-pos-backend-production.up.railway.app/register', {
+      const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: signupEmail, password: signupPassword }),

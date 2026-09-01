@@ -51,7 +51,7 @@ export default function Dashboard() {
   }, [pnlFilter, isPnlModalOpen]);
 
   const fetchDashboardData = (filter) => {
-    fetch(`http://alifabrics-pos-backend-production.up.railway.app/api/dashboard/summary?filter=${filter}`)
+    fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/dashboard/summary?filter=${filter}`)
       .then(res => res.json())
       .then(result => {
         if (result.error) {
@@ -69,7 +69,7 @@ export default function Dashboard() {
 
   const fetchPnlData = (filter) => {
     setPnlLoading(true);
-    fetch(`http://alifabrics-pos-backend-production.up.railway.app/api/dashboard/pnl?filter=${filter}`)
+    fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/dashboard/pnl?filter=${filter}`)
       .then(res => res.json())
       .then(result => {
         if (!result.error) {

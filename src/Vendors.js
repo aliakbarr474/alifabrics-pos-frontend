@@ -38,7 +38,7 @@ export default function Vendors() {
         const finalBalance = balance.trim();
 
         try {
-            const response = await fetch('http://localhost:5000/add-vendors', {
+            const response = await fetch('https://localhost:5000/add-vendors', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -51,7 +51,7 @@ export default function Vendors() {
             if (response.ok) {
                 alert('Vendor added successfully!');
 
-                const refresh = await fetch('http://localhost:5000/get-vendors');
+                const refresh = await fetch('https://localhost:5000/get-vendors');
                 const refreshData = await refresh.json();
                 setVendorData(refreshData);
 
@@ -68,7 +68,7 @@ export default function Vendors() {
     useEffect(() => {
         const fetchVendors = async () => {
             try {
-                const response = await fetch('http://localhost:5000/get-vendors');
+                const response = await fetch('https://localhost:5000/get-vendors');
 
                 if (!response.ok) {
                     throw new Error(`Error retrieving vendors: ${response.status}`);
@@ -93,7 +93,7 @@ export default function Vendors() {
         setVendorLedger([]);
 
         try {
-            const response = await fetch(`http://localhost:5000/vendors/${vendor.id}/details`);
+            const response = await fetch(`https://localhost:5000/vendors/${vendor.id}/details`);
             if (response.ok) {
                 const data = await response.json();
                 setVendorBrands(data.brands);
@@ -106,7 +106,7 @@ export default function Vendors() {
 
     const fetchLedger = async (vendorId) => {
         try {
-            const response = await fetch(`http://localhost:5000/vendors/${vendorId}/ledger`);
+            const response = await fetch(`https://localhost:5000/vendors/${vendorId}/ledger`);
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {

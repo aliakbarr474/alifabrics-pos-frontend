@@ -16,7 +16,7 @@ export default function Invoices() {
     const [returnItemsList, setReturnItemsList] = useState([]);
 
     useEffect(() => {
-        fetch('http://alifabrics-pos-backend-production.up.railway.app/invoices')
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/invoices')
             .then(res => res.json())
             .then(data => setInvoices(data))
             .catch(err => console.error(err));
@@ -29,7 +29,7 @@ export default function Invoices() {
 
     const generatePDF = async (invoice) => {
         try {
-            const res = await fetch(`http://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
+            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
             if (res.ok) {
                 const items = await res.json();
                 setSelectedInvoice(invoice);
@@ -45,7 +45,7 @@ export default function Invoices() {
 
     const openReturnModal = async (invoice) => {
         try {
-            const res = await fetch(`http://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
+            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
             if (res.ok) {
                 const items = await res.json();
                 setReturnInvoice(invoice);
@@ -74,7 +74,7 @@ export default function Invoices() {
         const totalRefund = itemsToReturn.reduce((sum, item) => sum + (item.returnQty * item.sellingPrice), 0);
 
         try {
-            const res = await fetch('http://alifabrics-pos-backend-production.up.railway.app/return', {
+            const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/return', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
