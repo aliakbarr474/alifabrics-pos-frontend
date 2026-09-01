@@ -102,7 +102,7 @@ const Login = () => {
 
             <p style={{fontSize: '12px'}}>
               Maybe register a user{' '}
-              <a href='#' onClick={(e) => { e.preventDefault(); setShowSignup(true); }}>
+              <a href='#!' onClick={(e) => { e.preventDefault(); setShowSignup(true); }}>
                 here
               </a>
             </p>
@@ -143,7 +143,7 @@ const Login = () => {
 
             <p style={{fontSize: '12px'}}>
               Already have an account?{' '}
-              <a href='#' onClick={(e) => { e.preventDefault(); setShowSignup(false); }}>
+              <a href='#!' onClick={(e) => { e.preventDefault(); setShowSignup(false); }}>
                 Log in
               </a>
             </p>
