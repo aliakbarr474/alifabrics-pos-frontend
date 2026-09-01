@@ -1,25 +1,41 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './Login';
+import Dashboard from './Dashboard';
+import ProtectedRoute from './ProtectedRoute';
+import Inventory from './Inventory';
+import Pos from './Pos';
+import Vendors from './Vendors';
+import Accounts from './Accounts';
+import Customers from './Customers';
+import Settings from './Settings';
+import Invoices from './Invoices';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route path="/products" element={<Inventory />} />
+        <Route path="/pos" element={<Pos />} />
+        <Route path='/vendors' element={<Vendors />} />
+        <Route path='/accounts' element={<Accounts />} />
+        <Route path='/customers' element={<Customers />} />
+        <Route path='/invoices' element={<Invoices />} />
+        <Route path='/settings' element={<Settings />} />
+      </Routes>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

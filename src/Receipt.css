@@ -1,0 +1,94 @@
+.receipt-wrapper {
+    display: none; 
+}
+
+@media print {
+    .receipt-wrapper {
+        display: block;
+        width: 80mm;
+        padding: 5mm;
+        margin: 0;
+        font-family: 'Courier New', Courier, monospace;
+        color: #000;
+        font-size: 12px;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+    
+    .receipt-wrapper, .receipt-wrapper * {
+        visibility: visible;
+    }
+    
+    .receipt-wrapper {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .receipt-content {
+        width: 300px;
+        padding: 20px;
+    }
+
+    .receipt-header, .receipt-footer {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .receipt-header h2 {
+        margin: 0 0 5px 0;
+        font-size: 18px;
+        letter-spacing: 1px;
+    }
+
+    .receipt-header p, .receipt-footer p {
+        margin: 5px 0;
+        font-size: 12px;
+    }
+
+    .receipt-header .sale-id {
+        margin: 0 0 15px 0;
+    }
+
+    .receipt-footer p {
+        margin-top: 20px;
+    }
+
+    .receipt-divider {
+        border-top: 1px dashed #000;
+        margin: 10px 0;
+    }
+
+    .receipt-item-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 14px;
+    }
+
+    .summary-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 5px 0;
+        font-size: 14px;
+    }
+
+    .net-total {
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .paid-amount {
+        margin-top: 5px;
+    }
+
+    .balance-due {
+        font-weight: bold;
+        margin-top: 5px;
+        border-top: 1px dotted #000;
+        padding-top: 5px;
+    }
+}
