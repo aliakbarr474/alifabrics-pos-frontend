@@ -81,7 +81,7 @@ export default function Invoices() {
                     saleId: returnInvoice.id,
                     customerId: returnInvoice.customer_id,
                     returnItems: itemsToReturn.map(item => ({
-                        itemId: item.product_id || item.itemId,
+                        itemId: item.item_id || item.itemId,
                         quantity: item.returnQty,
                         refundAmount: item.returnQty * item.sellingPrice
                     })),
