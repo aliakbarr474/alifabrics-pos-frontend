@@ -76,21 +76,18 @@
 }
 
 @media print {
-    /* body * {
-        visibility: hidden;
-    } */
-    
-    .receipt-wrapper, .receipt-wrapper * {
-        visibility: visible;
+    body {
+        overflow: visible !important;
     }
     
     .receipt-wrapper {
+        display: block !important;
         position: absolute;
-        left: 0;
         top: 0;
-        display: block;
-        width: 80mm;
-        padding: 5mm;
+        left: 0;
+        width: 100%;
         margin: 0;
+        padding: 0;
+        background: white !important;
     }
-}
+}}

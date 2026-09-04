@@ -411,7 +411,9 @@ export default function Pos() {
                 </div>
             )}
 
-            <Receipt ref={receiptRef} cart={cart} subtotal={subtotal} discount={discount} netTotal={netTotal} saleId={currentSaleId} invoiceNumber={currentInvoice} amountPaid={amountPaid} />
+            <div style={{ display: 'none' }}>
+                <Receipt ref={receiptRef} cart={cart} subtotal={subtotal} discount={discount} netTotal={netTotal} saleId={currentSaleId} invoiceNumber={currentInvoice} amountPaid={amountPaid} />
+            </div>
         </div>
     );
 }
