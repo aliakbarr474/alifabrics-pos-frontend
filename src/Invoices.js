@@ -11,6 +11,7 @@ export default function Invoices() {
     const [invoiceItems, setInvoiceItems] = useState([]);
     const receiptRef = useRef();
 
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [returnInvoice, setReturnInvoice] = useState(null);
     const [returnItemsList, setReturnItemsList] = useState([]);
@@ -34,9 +35,7 @@ export default function Invoices() {
                 const items = await res.json();
                 setSelectedInvoice(invoice);
                 setInvoiceItems(items);
-                setTimeout(() => {
-                    handlePrint();
-                }, 300);
+                setShowReceiptModal(true); // Opens the visual modal popup on screen
             }
         } catch (error) {
             alert("Failed to fetch invoice details.");
@@ -61,8 +60,8 @@ export default function Invoices() {
         let num = Number(val);
         if (num > maxQty) num = maxQty;
         if (num < 0) num = 0;
-
-        setReturnItemsList(prev => prev.map(item =>
+        
+        setReturnItemsList(prev => prev.map(item => 
             item.id === itemId ? { ...item, returnQty: num } : item
         ));
     };
@@ -92,9 +91,7 @@ export default function Invoices() {
             if (res.ok) {
                 setShowReturnModal(false);
                 alert("Return processed successfully!");
-
                 setInvoices(prev => prev.filter(inv => inv.id !== returnInvoice.id));
-
             } else {
                 const err = await res.json();
                 alert(err.message);
@@ -112,13 +109,13 @@ export default function Invoices() {
     return (
         <div className="invoices-layout">
             <Sidebar />
-
+            
             <div className="invoices-side">
                 <div className="invoices-header">
                     <h1>Invoices</h1>
-                    <input
-                        type="text"
-                        placeholder="Search invoice number..."
+                    <input 
+                        type="text" 
+                        placeholder="Search invoice number..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
@@ -145,13 +142,13 @@ export default function Invoices() {
                                     <td>{inv.net_total.toLocaleString()} PKR</td>
                                     <td style={{ textAlign: 'right' }}>
                                         <div className="action-buttons">
-                                            <button
+                                            <button 
                                                 className="return-btn"
                                                 onClick={() => openReturnModal(inv)}
                                             >
                                                 Return
                                             </button>
-                                            <button
+                                            <button 
                                                 className="pdf-btn"
                                                 onClick={() => generatePDF(inv)}
                                             >
@@ -173,6 +170,41 @@ export default function Invoices() {
                 </div>
             </div>
 
+            {/* RECEIPT PREVIEW MODAL */}
+            {showReceiptModal && selectedInvoice && (
+                <div className="modal-overlay" onClick={() => setShowReceiptModal(false)}>
+                    <div className="modal-content view-modal" onClick={e => e.stopPropagation()} style={{ width: '380px' }}>
+                        <div className="modal-header">
+                            <div>
+                                <h2 className="view-modal-title">Receipt Preview</h2>
+                                <span className="view-modal-subtitle">Invoice: {selectedInvoice.invoice_number}</span>
+                            </div>
+                            <button className="close-btn" onClick={() => setShowReceiptModal(false)}>✕</button>
+                        </div>
+                        
+                        <div className="modal-form" style={{ padding: '15px', maxHeight: '450px', overflowY: 'auto', background: '#f9f9f9' }}>
+                            <Receipt 
+                                ref={receiptRef} 
+                                cart={invoiceItems} 
+                                subtotal={selectedInvoice.total_amount} 
+                                discount={selectedInvoice.discount} 
+                                netTotal={selectedInvoice.net_total} 
+                                saleId={selectedInvoice.id} 
+                                invoiceNumber={selectedInvoice.invoice_number} 
+                            />
+                        </div>
+
+                        <div className="modal-footer" style={{ padding: '15px 24px', display: 'flex', justifyContent: 'space-between' }}>
+                            <button className="btn-cancel" onClick={() => setShowReceiptModal(false)} style={{ width: 'auto' }}>Close</button>
+                            <button className="btn-save" onClick={handlePrint} style={{ width: 'auto', backgroundColor: '#2563EB', color: '#fff' }}>
+                                Save as PDF / Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* RETURN MODAL */}
             {showReturnModal && (
                 <div className="modal-overlay" onClick={() => setShowReturnModal(false)}>
                     <div className="modal-content view-modal" onClick={e => e.stopPropagation()}>
@@ -231,18 +263,6 @@ export default function Invoices() {
                         </div>
                     </div>
                 </div>
-            )}
-
-            {selectedInvoice && (
-                <Receipt
-                    ref={receiptRef}
-                    cart={invoiceItems}
-                    subtotal={selectedInvoice.total_amount}
-                    discount={selectedInvoice.discount}
-                    netTotal={selectedInvoice.net_total}
-                    saleId={selectedInvoice.id}
-                    invoiceNumber={selectedInvoice.invoice_number}
-                />
             )}
         </div>
     );
