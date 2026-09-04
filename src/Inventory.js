@@ -291,8 +291,8 @@ export default function Inventory() {
 
             <div className='inventory-side'>
                 <div className='inventory-header'>
-                    <h1>Products</h1>
-                    <button className='add-product-btn' onClick={addBtnClick}>+ Add Product</button>
+                    <h1>Inventory</h1>
+                    <button className='add-product-btn' onClick={addBtnClick}>New Purchase</button>
                 </div>
 
                 <div className="filter-controls-container">
