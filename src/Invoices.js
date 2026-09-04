@@ -61,8 +61,8 @@ export default function Invoices() {
         let num = Number(val);
         if (num > maxQty) num = maxQty;
         if (num < 0) num = 0;
-        
-        setReturnItemsList(prev => prev.map(item => 
+
+        setReturnItemsList(prev => prev.map(item =>
             item.id === itemId ? { ...item, returnQty: num } : item
         ));
     };
@@ -81,7 +81,7 @@ export default function Invoices() {
                     saleId: returnInvoice.id,
                     customerId: returnInvoice.customer_id,
                     returnItems: itemsToReturn.map(item => ({
-                        itemId: item.id,
+                        itemId: item.product_id || item.itemId,
                         quantity: item.returnQty,
                         refundAmount: item.returnQty * item.sellingPrice
                     })),
@@ -92,6 +92,9 @@ export default function Invoices() {
             if (res.ok) {
                 setShowReturnModal(false);
                 alert("Return processed successfully!");
+
+                setInvoices(prev => prev.filter(inv => inv.id !== returnInvoice.id));
+
             } else {
                 const err = await res.json();
                 alert(err.message);
@@ -109,13 +112,13 @@ export default function Invoices() {
     return (
         <div className="invoices-layout">
             <Sidebar />
-            
+
             <div className="invoices-side">
                 <div className="invoices-header">
                     <h1>Invoices</h1>
-                    <input 
-                        type="text" 
-                        placeholder="Search invoice number..." 
+                    <input
+                        type="text"
+                        placeholder="Search invoice number..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
@@ -142,13 +145,13 @@ export default function Invoices() {
                                     <td>{inv.net_total.toLocaleString()} PKR</td>
                                     <td style={{ textAlign: 'right' }}>
                                         <div className="action-buttons">
-                                            <button 
+                                            <button
                                                 className="return-btn"
                                                 onClick={() => openReturnModal(inv)}
                                             >
                                                 Return
                                             </button>
-                                            <button 
+                                            <button
                                                 className="pdf-btn"
                                                 onClick={() => generatePDF(inv)}
                                             >
@@ -231,14 +234,14 @@ export default function Invoices() {
             )}
 
             {selectedInvoice && (
-                <Receipt 
-                    ref={receiptRef} 
-                    cart={invoiceItems} 
-                    subtotal={selectedInvoice.total_amount} 
-                    discount={selectedInvoice.discount} 
-                    netTotal={selectedInvoice.net_total} 
-                    saleId={selectedInvoice.id} 
-                    invoiceNumber={selectedInvoice.invoice_number} 
+                <Receipt
+                    ref={receiptRef}
+                    cart={invoiceItems}
+                    subtotal={selectedInvoice.total_amount}
+                    discount={selectedInvoice.discount}
+                    netTotal={selectedInvoice.net_total}
+                    saleId={selectedInvoice.id}
+                    invoiceNumber={selectedInvoice.invoice_number}
                 />
             )}
         </div>

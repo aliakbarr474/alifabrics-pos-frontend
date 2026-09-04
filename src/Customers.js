@@ -4,20 +4,29 @@ import './Customers.css';
 import './Inventory.css';
 
 export default function Customers() {
-    const [addClick, toggleAddClick] = useState(false);
+    // Modal states
+    const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
+    // Data states
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Selected customer & history
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [historyData, setHistoryData] = useState({});
     const [historyLoading, setHistoryLoading] = useState(false);
 
+    // Search & Filter
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('All');
 
-    const [paymentCustomer, setPaymentCustomer] = useState('');
+    // New Customer state
+    const [newCustomerName, setNewCustomerName] = useState('');
+    const [newCustomerPhone, setNewCustomerPhone] = useState('');
+
+    // Payment state
     const [paymentMethod, setPaymentMethod] = useState('');
     const [paymentAmount, setPaymentAmount] = useState('');
 
@@ -60,8 +69,9 @@ export default function Customers() {
         }
     };
 
-    const closeModal = () => {
+    const closeHistoryModal = () => {
         setSelectedCustomer(null);
+        setIsPaymentOpen(false);
     };
 
     const formatDate = (dateString) => {
@@ -76,10 +86,41 @@ export default function Customers() {
         }
     };
 
+    const handleAddCustomer = async (e) => {
+        e.preventDefault();
+        
+        if (!newCustomerName) return alert("Missing: Customer Name");
+
+        try {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/customers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newCustomerName,
+                    phone: newCustomerPhone
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Customer added successfully!');
+                setNewCustomerName('');
+                setNewCustomerPhone('');
+                setIsAddCustomerOpen(false);
+                fetchCustomers();
+            } else {
+                alert(`Backend Error: ${data.message || 'Failed to add customer'}`);
+            }
+        } catch (error) {
+            alert('Failed to connect to the server.');
+        }
+    };
+
     const handleAddPayment = async (e) => {
         e.preventDefault();
 
-        if (!paymentCustomer) return alert("Missing: Customer");
+        if (!selectedCustomer) return alert("Missing: Customer Context");
         if (!paymentMethod) return alert("Missing: Payment Method");
         if (!paymentAmount) return alert("Missing: Amount");
 
@@ -88,7 +129,7 @@ export default function Customers() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    customerId: paymentCustomer,
+                    customerId: selectedCustomer.id,
                     method: paymentMethod,
                     amount: paymentAmount
                 })
@@ -98,12 +139,11 @@ export default function Customers() {
 
             if (response.ok) {
                 alert('Payment added and receipt sent via WhatsApp!');
-                
-                setPaymentCustomer('');
                 setPaymentMethod('');
                 setPaymentAmount('');
+                setIsPaymentOpen(false);
                 
-                toggleAddClick(false);
+                // Refresh customer data to update balance
                 fetchCustomers();
             } else {
                 alert(`Backend Error: ${data.message}`);
@@ -139,10 +179,6 @@ export default function Customers() {
         }
     });
 
-    const addBtnClick = () => toggleAddClick(!addClick);
-    const onClose = () => toggleAddClick(false);
-    const handleModalClick = (e) => e.stopPropagation();
-
     return (
         <div className="inventory-layout">
             <Sidebar />
@@ -150,7 +186,9 @@ export default function Customers() {
             <div className="inventory-side">
                 <div className="inventory-header">
                     <h1>Customers</h1>
-                    <button className='add-product-btn' onClick={addBtnClick}>+ Add Payment</button>
+                    <button className='add-product-btn' onClick={() => setIsAddCustomerOpen(true)}>
+                        + Add New Customer
+                    </button>
                 </div>
 
                 <div className="filter-controls">
@@ -206,7 +244,7 @@ export default function Customers() {
                                             onClick={() => handleRowClick(customer)}
                                         >
                                             <td className="customer-name">{customer.name}</td>
-                                            <td>{customer.phone}</td>
+                                            <td>{customer.phone || 'N/A'}</td>
                                             <td className="metric-bold" style={{ color: customer.balance_due > 0 ? '#DC2626' : '#16A34A' }}>
                                                 {Number(customer.balance_due || 0).toLocaleString()} PKR
                                             </td>
@@ -222,18 +260,62 @@ export default function Customers() {
                 </div>
             </div>
 
+            {/* History & Payment Modal */}
             {selectedCustomer && (
-                <div className="history-modal-overlay" onClick={closeModal}>
+                <div className="history-modal-overlay" onClick={closeHistoryModal}>
                     <div className="history-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="history-modal-header">
+                        <div className="history-modal-header header-actions">
                             <div>
-                                <h2 className="history-modal-title">{selectedCustomer.name}'s Purchase History</h2>
-                                <p className="history-modal-subtitle">{selectedCustomer.phone}</p>
+                                <h2 className="history-modal-title">{selectedCustomer.name}'s Details</h2>
+                                <p className="history-modal-subtitle">{selectedCustomer.phone || 'No phone'} | Balance: {Number(selectedCustomer.balance_due || 0).toLocaleString()} PKR</p>
                             </div>
-                            <button className="close-btn" onClick={closeModal}>&times;</button>
+                            <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+                                <button className="add-product-btn" onClick={() => setIsPaymentOpen(true)}>
+                                    Make Payment
+                                </button>
+                                <button className="close-btn" onClick={closeHistoryModal}>&times;</button>
+                            </div>
                         </div>
 
                         <div className="history-modal-body">
+                            {/* Inner Payment Form */}
+                            {isPaymentOpen ? (
+                                <form className="modal-form" onSubmit={handleAddPayment} style={{marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px'}}>
+                                    <h3 style={{marginTop: 0}}>Process Payment</h3>
+                                    <div className='form-row'>
+                                        <div className="form-group">
+                                            <label>Payment Method</label>
+                                            <select 
+                                                value={paymentMethod} 
+                                                onChange={(e) => setPaymentMethod(e.target.value)} 
+                                                required
+                                            >
+                                                <option value="" disabled>Select method...</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Bank">Bank</option>
+                                                <option value="Cheque">Cheque</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Amount (PKR)</label>
+                                            <input 
+                                                type="text" 
+                                                inputMode="decimal" 
+                                                placeholder="0"
+                                                value={paymentAmount} 
+                                                onChange={(e) => handleNumberChange(e, setPaymentAmount)} 
+                                                required 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer" style={{marginTop: '10px'}}>
+                                        <button type="button" className="btn-cancel" onClick={() => setIsPaymentOpen(false)}>Cancel</button>
+                                        <button type="submit" className="add-product-btn">Submit Payment</button>
+                                    </div>
+                                </form>
+                            ) : null}
+
+                            <h3 style={{marginBottom: '10px'}}>Purchase History</h3>
                             {historyLoading && !historyData[selectedCustomer.id] ? (
                                 <p className="history-loading">Loading receipts...</p>
                             ) : historyData[selectedCustomer.id]?.length === 0 ? (
@@ -267,64 +349,44 @@ export default function Customers() {
                 </div>
             )}
 
-            {addClick && (
-                <div className='modal-overlay' onClick={onClose}>
-                    <div className='modal-content' onClick={handleModalClick}>
+            {/* Add New Customer Modal */}
+            {isAddCustomerOpen && (
+                <div className='modal-overlay' onClick={() => setIsAddCustomerOpen(false)}>
+                    <div className='modal-content' onClick={(e) => e.stopPropagation()}>
                         <div className='history-modal-header'>
-                            <h2 className="history-modal-title">Add New Customer Payment</h2>
-                            <button className="close-btn" onClick={onClose}>&times;</button>
+                            <h2 className="history-modal-title">Add New Customer</h2>
+                            <button className="close-btn" onClick={() => setIsAddCustomerOpen(false)}>&times;</button>
                         </div>
 
-                        <form className="modal-form" onSubmit={handleAddPayment}>
+                        <form className="modal-form" onSubmit={handleAddCustomer}>
                             <div className='form-row'>
                                 <div className="form-group full-width">
                                     <label>Customer Name</label>
-                                    <select 
-                                        value={paymentCustomer} 
-                                        onChange={(e) => setPaymentCustomer(e.target.value)} 
-                                        required
-                                    >
-                                        <option value="" disabled>Select a customer...</option>
-                                        {customers.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name} {c.phone ? `(${c.phone})` : ''} — Owes: {Number(c.balance_due || 0).toLocaleString()} PKR
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className='form-row'>
-                                <div className="form-group">
-                                    <label>Payment Method</label>
-                                    <select 
-                                        value={paymentMethod} 
-                                        onChange={(e) => setPaymentMethod(e.target.value)} 
-                                        required
-                                    >
-                                        <option value="" disabled>Select method...</option>
-                                        <option value="Cash">Cash</option>
-                                        <option value="Bank">Bank</option>
-                                        <option value="Cheque">Cheque</option>
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Amount (PKR)</label>
                                     <input 
                                         type="text" 
-                                        inputMode="decimal" 
-                                        placeholder="0"
-                                        value={paymentAmount} 
-                                        onChange={(e) => handleNumberChange(e, setPaymentAmount)} 
+                                        placeholder="Enter customer name"
+                                        value={newCustomerName} 
+                                        onChange={(e) => setNewCustomerName(e.target.value)} 
                                         required 
                                     />
                                 </div>
                             </div>
 
+                            <div className='form-row'>
+                                <div className="form-group full-width">
+                                    <label>Phone Number (Optional)</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Enter phone number"
+                                        value={newCustomerPhone} 
+                                        onChange={(e) => setNewCustomerPhone(e.target.value)} 
+                                    />
+                                </div>
+                            </div>
+
                             <div className="modal-footer">
-                                <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-                                <button type="submit" className="add-product-btn">Save Payment</button>
+                                <button type="button" className="btn-cancel" onClick={() => setIsAddCustomerOpen(false)}>Cancel</button>
+                                <button type="submit" className="add-product-btn">Save Customer</button>
                             </div>
                         </form>
                     </div>
