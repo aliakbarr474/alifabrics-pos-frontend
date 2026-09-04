@@ -196,7 +196,7 @@ export default function Invoices() {
 
                         <div className="modal-footer" style={{ padding: '15px 24px', display: 'flex', justifyContent: 'space-between' }}>
                             <button className="btn-cancel" onClick={() => setShowReceiptModal(false)} style={{ width: 'auto' }}>Close</button>
-                            <button className="btn-save" onClick={handlePrint} style={{ width: 'auto', backgroundColor: '#2563EB', color: '#fff' }}>
+                            <button className="btn-save" onClick={handlePrint} style={{ width: 'auto', backgroundColor: '#475569', color: '#fff' }}>
                                 Save as PDF / Print
                             </button>
                         </div>
@@ -204,7 +204,6 @@ export default function Invoices() {
                 </div>
             )}
 
-            {/* RETURN MODAL */}
             {showReturnModal && (
                 <div className="modal-overlay" onClick={() => setShowReturnModal(false)}>
                     <div className="modal-content view-modal" onClick={e => e.stopPropagation()}>

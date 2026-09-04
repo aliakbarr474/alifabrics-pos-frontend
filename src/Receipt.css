@@ -76,9 +76,9 @@
 }
 
 @media print {
-    body * {
+    /* body * {
         visibility: hidden;
-    }
+    } */
     
     .receipt-wrapper, .receipt-wrapper * {
         visibility: visible;
