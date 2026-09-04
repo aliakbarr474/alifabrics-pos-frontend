@@ -5,7 +5,7 @@ export default function Sidebar() {
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard' },
         { path: '/pos', label: 'Sales (POS)' },
-        { path: '/products', label: 'Products' },
+        { path: '/inventory', label: 'Inventory' },
         { path: '/vendors', label: 'Vendors' },
         { path: '/accounts', label: 'Accounts' },
         { path: '/customers', label: 'Customers' },
