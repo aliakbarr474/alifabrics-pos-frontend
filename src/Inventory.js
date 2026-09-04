@@ -3,7 +3,8 @@ import './Inventory.css'
 import Sidebar from './Sidebar'
 
 export default function Inventory() {
-    const [addClick, toggleAddClick] = useState(false);
+    const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+    const [showProductModal, setShowProductModal] = useState(false);
 
     const [vendorList, setVendorList] = useState([]);
     const [selectedVendor, setSelectedVendor] = useState('');
@@ -84,7 +85,7 @@ export default function Inventory() {
                         setBrandList(fallbackBrands);
                     }
                 })
-                .catch(err => {
+                .catch(() => {
                     setBrandList(fallbackBrands);
                 });
         } else {
@@ -146,10 +147,19 @@ export default function Inventory() {
         setItems(newItems);
     };
 
-    const addBtnClick = () => toggleAddClick(!addClick);
+    const openPurchaseModal = () => {
+        setItems([{ ...initialItem }]);
+        setShowPurchaseModal(true);
+    };
+
+    const openProductModal = () => {
+        setItems([{ ...initialItem }]);
+        setShowProductModal(true);
+    };
     
     const onClose = () => {
-        toggleAddClick(false);
+        setShowPurchaseModal(false);
+        setShowProductModal(false);
         setItems([{ ...initialItem }]);
         setSelectedVendor('');
         setIsNewVendor(false);
@@ -179,21 +189,13 @@ export default function Inventory() {
         setViewProduct(null);
     };
 
-    const addProduct = async (e) => {
-        e.preventDefault();
-
+    const processItemsData = () => {
         for (const item of items) {
             if (item.categoryMessage || item.unitMessage) {
                 alert("Please resolve the duplicate errors before saving.");
-                return;
+                return null;
             }
         }
-
-        const finalVendorName = isNewVendor 
-            ? customVendorName.trim() 
-            : (typeof selectedVendor === 'object' && selectedVendor !== null ? (selectedVendor.contact_person || selectedVendor.company_name) : selectedVendor);
-
-        if (!finalVendorName) return alert("Missing: Vendor");
 
         const formattedItems = items.map(item => {
             const finalBrandName = item.isNewBrand ? item.customBrandName.trim() : item.selectedBrand;
@@ -223,6 +225,21 @@ export default function Inventory() {
             if (!item.sellingPrice) return alert(`Item ${i + 1}: Missing Selling Price`);
         }
 
+        return formattedItems;
+    };
+
+    const addPurchase = async (e) => {
+        e.preventDefault();
+        
+        const formattedItems = processItemsData();
+        if (!formattedItems) return;
+
+        const finalVendorName = isNewVendor 
+            ? customVendorName.trim() 
+            : (typeof selectedVendor === 'object' && selectedVendor !== null ? (selectedVendor.contact_person || selectedVendor.company_name) : selectedVendor);
+
+        if (!finalVendorName) return alert("Missing: Vendor");
+
         try {
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-product', {
                 method: 'POST',
@@ -239,13 +256,8 @@ export default function Inventory() {
             const data = await response.json();
 
             if (response.ok) {
-                alert('Products added successfully!');
-
-                setItems([{ ...initialItem }]);
-                setSelectedVendor(''); setCustomVendorName(''); setCustomVendorPhone(''); setIsNewVendor(false);
-                setVendorInvoiceNumber(''); setPurchaseDate(new Date().toISOString().split('T')[0]);
-                
-                toggleAddClick(false);
+                alert('Purchase added successfully!');
+                onClose();
                 fetchInventory();
                 
                 fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
@@ -256,17 +268,41 @@ export default function Inventory() {
             } else {
                 alert(`Backend Error: ${data.message}`);
             }
-
         } catch (error) {
-            alert('Failed to connect to the server. Is your backend running?');
+            alert('Failed to connect to the server.');
         }
-    }
+    };
+
+    const addProductOnly = async (e) => {
+        e.preventDefault();
+        
+        const formattedItems = processItemsData();
+        if (!formattedItems) return;
+
+        try {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-single-product', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: formattedItems })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Products added successfully!');
+                onClose();
+                fetchInventory();
+            } else {
+                alert(`Backend Error: ${data.message}`);
+            }
+        } catch (error) {
+            alert('Failed to connect to the server.');
+        }
+    };
 
     const filteredInventory = (Array.isArray(inventoryData) ? inventoryData : []).filter((item) => {
         if (!searchQuery) return true;
-
         const query = searchQuery.toLowerCase();
-
         switch (filterType) {
             case 'Product Name':
                 return item.productName?.toLowerCase().includes(query);
@@ -285,6 +321,165 @@ export default function Inventory() {
         }
     });
 
+    const renderTableGrid = () => (
+        <div className="table-wrapper visible-overflow table-margin">
+            <table className="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Unit</th>
+                        <th>Qty</th>
+                        <th>Cost Price</th>
+                        <th>Sell Price</th>
+                        <th>Total (PKR)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items.map((item, index) => (
+                        <tr key={index}>
+                            <td className="grid-td-pad">
+                                <input 
+                                    type="text" 
+                                    className="grid-input" 
+                                    placeholder="e.g. 24 Karat"
+                                    value={item.productName} 
+                                    onChange={(e) => handleItemChange(index, 'productName', e.target.value)} 
+                                    required 
+                                />
+                            </td>
+                            <td className="grid-td-pad">
+                                {item.isNewBrand ? (
+                                    <div className="custom-input-group">
+                                        <input 
+                                            type="text" 
+                                            className="grid-input" 
+                                            placeholder="New Brand"
+                                            value={item.customBrandName} 
+                                            onChange={(e) => handleItemChange(index, 'customBrandName', e.target.value)} 
+                                            required 
+                                        />
+                                        <button type="button" className="btn-secondary close-icon-btn" onClick={() => {
+                                            handleItemChange(index, 'isNewBrand', false);
+                                            handleItemChange(index, 'customBrandName', '');
+                                        }}>✕</button>
+                                    </div>
+                                ) : (
+                                    <select className="grid-input" value={item.selectedBrand} onChange={(e) => {
+                                        if (e.target.value === "ADD_NEW") {
+                                            handleItemChange(index, 'isNewBrand', true);
+                                            handleItemChange(index, 'selectedBrand', '');
+                                        } else {
+                                            handleItemChange(index, 'selectedBrand', e.target.value);
+                                        }
+                                    }} required>
+                                        <option value="" disabled>Select...</option>
+                                        {brandList.map((b, i) => {
+                                            const bName = typeof b === 'string' ? b : b.name;
+                                            return <option key={i} value={bName}>{bName}</option>;
+                                        })}
+                                        <option disabled>──────</option>
+                                        <option value="ADD_NEW">➕ New Brand</option>
+                                    </select>
+                                )}
+                            </td>
+                            <td className="grid-td-pad">
+                                {item.isNewCategory ? (
+                                    <div className="custom-input-group">
+                                        <input 
+                                            type="text" 
+                                            className="grid-input" 
+                                            placeholder="New Category"
+                                            value={item.customCategoryName} 
+                                            onChange={(e) => handleItemChange(index, 'customCategoryName', e.target.value)} 
+                                            required 
+                                        />
+                                        <button type="button" className="btn-secondary close-icon-btn" onClick={() => {
+                                            handleItemChange(index, 'isNewCategory', false);
+                                            handleItemChange(index, 'customCategoryName', '');
+                                            handleItemChange(index, 'categoryMessage', '');
+                                        }}>✕</button>
+                                    </div>
+                                ) : (
+                                    <select className="grid-input" value={item.selectedCategory} onChange={(e) => {
+                                        if (e.target.value === "ADD_NEW") {
+                                            handleItemChange(index, 'isNewCategory', true);
+                                            handleItemChange(index, 'selectedCategory', '');
+                                        } else {
+                                            handleItemChange(index, 'selectedCategory', e.target.value);
+                                        }
+                                    }} required>
+                                        <option value="" disabled>Select...</option>
+                                        {categoryList.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                                        <option disabled>──────</option>
+                                        <option value="ADD_NEW">➕ New Category</option>
+                                    </select>
+                                )}
+                                {item.categoryMessage && <span className="error-text block-mt">{item.categoryMessage}</span>}
+                            </td>
+                            <td className="grid-td-pad">
+                                {item.isNewUnit ? (
+                                    <div className="custom-input-group">
+                                        <input 
+                                            type="text" 
+                                            className="grid-input" 
+                                            placeholder="New Unit"
+                                            value={item.customUnitName} 
+                                            onChange={(e) => handleItemChange(index, 'customUnitName', e.target.value)} 
+                                            required 
+                                        />
+                                        <button type="button" className="btn-secondary close-icon-btn" onClick={() => {
+                                            handleItemChange(index, 'isNewUnit', false);
+                                            handleItemChange(index, 'customUnitName', '');
+                                            handleItemChange(index, 'unitMessage', '');
+                                        }}>✕</button>
+                                    </div>
+                                ) : (
+                                    <select className="grid-input" value={item.selectedUnit} onChange={(e) => {
+                                        if (e.target.value === "ADD_NEW") {
+                                            handleItemChange(index, 'isNewUnit', true);
+                                            handleItemChange(index, 'selectedUnit', '');
+                                        } else {
+                                            handleItemChange(index, 'selectedUnit', e.target.value);
+                                        }
+                                    }} required>
+                                        <option value="" disabled>Select...</option>
+                                        {unitList.map((u, i) => <option key={i} value={u}>{u}</option>)}
+                                        <option disabled>──────</option>
+                                        <option value="ADD_NEW">➕ New Unit</option>
+                                    </select>
+                                )}
+                                {item.unitMessage && <span className="error-text block-mt">{item.unitMessage}</span>}
+                            </td>
+                            <td className="grid-td-pad">
+                                <input type="text" inputMode="decimal" className="grid-input num-input" placeholder="0"
+                                    value={item.quantity} onChange={(e) => handleNumberChange(index, 'quantity', e.target.value)} required />
+                            </td>
+                            <td className="grid-td-pad">
+                                <input type="text" inputMode="decimal" className="grid-input num-input" placeholder="0"
+                                    value={item.unitPrice} onChange={(e) => handleNumberChange(index, 'unitPrice', e.target.value)} required />
+                            </td>
+                            <td className="grid-td-pad">
+                                <input type="text" inputMode="decimal" className="grid-input num-input" placeholder="0"
+                                    value={item.sellingPrice} onChange={(e) => handleNumberChange(index, 'sellingPrice', e.target.value)} required />
+                            </td>
+                            <td className="grid-td-pad text-bold-slate">
+                                {item.totalPrice.toLocaleString()}
+                            </td>
+                            <td className="grid-td-pad">
+                                {items.length > 1 && (
+                                    <button type="button" className="btn-remove-grid-item" onClick={() => removeRow(index)} title="Remove row">✕</button>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
     return (
         <div className='inventory-layout'>
             <Sidebar />
@@ -292,7 +487,10 @@ export default function Inventory() {
             <div className='inventory-side'>
                 <div className='inventory-header'>
                     <h1>Inventory</h1>
-                    <button className='add-product-btn' onClick={addBtnClick}>New Purchase</button>
+                    <div className="header-actions">
+                        <button className='add-product-btn' onClick={openProductModal}>Add Product</button>
+                        <button className='add-product-btn' onClick={openPurchaseModal}>New Purchase</button>
+                    </div>
                 </div>
 
                 <div className="filter-controls-container">
@@ -354,11 +552,11 @@ export default function Inventory() {
                     </table>
                 </div>
 
-                {addClick && (
+                {showPurchaseModal && (
                     <div className="modal-overlay" onClick={onClose}>
                         <div className="modal-content modal-content-wide" onClick={handleModalClick}>
                             <div className="modal-header">
-                                <h2>Add New Products</h2>
+                                <h2>New Purchase</h2>
                                 <button className="close-btn" onClick={onClose}>&times;</button>
                             </div>
 
@@ -422,161 +620,32 @@ export default function Inventory() {
                                     </div>
                                 </div>
 
-                                <div className="table-wrapper visible-overflow table-margin">
-                                    <table className="inventory-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Product Name</th>
-                                                <th>Brand</th>
-                                                <th>Category</th>
-                                                <th>Unit</th>
-                                                <th>Qty</th>
-                                                <th>Cost Price</th>
-                                                <th>Sell Price</th>
-                                                <th>Total (PKR)</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {items.map((item, index) => (
-                                                <tr key={index}>
-                                                    <td className="grid-td-pad">
-                                                        <input 
-                                                            type="text" 
-                                                            className="grid-input" 
-                                                            placeholder="e.g. 24 Karat"
-                                                            value={item.productName} 
-                                                            onChange={(e) => handleItemChange(index, 'productName', e.target.value)} 
-                                                            required 
-                                                        />
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        {item.isNewBrand ? (
-                                                            <div className="custom-input-group">
-                                                                <input 
-                                                                    type="text" 
-                                                                    className="grid-input" 
-                                                                    placeholder="New Brand"
-                                                                    value={item.customBrandName} 
-                                                                    onChange={(e) => handleItemChange(index, 'customBrandName', e.target.value)} 
-                                                                    required 
-                                                                />
-                                                                <button type="button" className="btn-secondary close-icon-btn" onClick={() => {
-                                                                    handleItemChange(index, 'isNewBrand', false);
-                                                                    handleItemChange(index, 'customBrandName', '');
-                                                                }}>✕</button>
-                                                            </div>
-                                                        ) : (
-                                                            <select className="grid-input" value={item.selectedBrand} onChange={(e) => {
-                                                                if (e.target.value === "ADD_NEW") {
-                                                                    handleItemChange(index, 'isNewBrand', true);
-                                                                    handleItemChange(index, 'selectedBrand', '');
-                                                                } else {
-                                                                    handleItemChange(index, 'selectedBrand', e.target.value);
-                                                                }
-                                                            }} required>
-                                                                <option value="" disabled>Select...</option>
-                                                                {brandList.map((b, i) => {
-                                                                    const bName = typeof b === 'string' ? b : b.name;
-                                                                    return <option key={i} value={bName}>{bName}</option>;
-                                                                })}
-                                                                <option disabled>──────</option>
-                                                                <option value="ADD_NEW">➕ New Brand</option>
-                                                            </select>
-                                                        )}
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        {item.isNewCategory ? (
-                                                            <div className="custom-input-group">
-                                                                <input 
-                                                                    type="text" 
-                                                                    className="grid-input" 
-                                                                    placeholder="New Category"
-                                                                    value={item.customCategoryName} 
-                                                                    onChange={(e) => handleItemChange(index, 'customCategoryName', e.target.value)} 
-                                                                    required 
-                                                                />
-                                                                <button type="button" className="btn-secondary close-icon-btn" onClick={() => {
-                                                                    handleItemChange(index, 'isNewCategory', false);
-                                                                    handleItemChange(index, 'customCategoryName', '');
-                                                                    handleItemChange(index, 'categoryMessage', '');
-                                                                }}>✕</button>
-                                                            </div>
-                                                        ) : (
-                                                            <select className="grid-input" value={item.selectedCategory} onChange={(e) => {
-                                                                if (e.target.value === "ADD_NEW") {
-                                                                    handleItemChange(index, 'isNewCategory', true);
-                                                                    handleItemChange(index, 'selectedCategory', '');
-                                                                } else {
-                                                                    handleItemChange(index, 'selectedCategory', e.target.value);
-                                                                }
-                                                            }} required>
-                                                                <option value="" disabled>Select...</option>
-                                                                {categoryList.map((c, i) => <option key={i} value={c}>{c}</option>)}
-                                                                <option disabled>──────</option>
-                                                                <option value="ADD_NEW">➕ New Category</option>
-                                                            </select>
-                                                        )}
-                                                        {item.categoryMessage && <span className="error-text block-mt">{item.categoryMessage}</span>}
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        {item.isNewUnit ? (
-                                                            <div className="custom-input-group">
-                                                                <input 
-                                                                    type="text" 
-                                                                    className="grid-input" 
-                                                                    placeholder="New Unit"
-                                                                    value={item.customUnitName} 
-                                                                    onChange={(e) => handleItemChange(index, 'customUnitName', e.target.value)} 
-                                                                    required 
-                                                                />
-                                                                <button type="button" className="btn-secondary close-icon-btn" onClick={() => {
-                                                                    handleItemChange(index, 'isNewUnit', false);
-                                                                    handleItemChange(index, 'customUnitName', '');
-                                                                    handleItemChange(index, 'unitMessage', '');
-                                                                }}>✕</button>
-                                                            </div>
-                                                        ) : (
-                                                            <select className="grid-input" value={item.selectedUnit} onChange={(e) => {
-                                                                if (e.target.value === "ADD_NEW") {
-                                                                    handleItemChange(index, 'isNewUnit', true);
-                                                                    handleItemChange(index, 'selectedUnit', '');
-                                                                } else {
-                                                                    handleItemChange(index, 'selectedUnit', e.target.value);
-                                                                }
-                                                            }} required>
-                                                                <option value="" disabled>Select...</option>
-                                                                {unitList.map((u, i) => <option key={i} value={u}>{u}</option>)}
-                                                                <option disabled>──────</option>
-                                                                <option value="ADD_NEW">➕ New Unit</option>
-                                                            </select>
-                                                        )}
-                                                        {item.unitMessage && <span className="error-text block-mt">{item.unitMessage}</span>}
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        <input type="text" inputMode="decimal" className="grid-input num-input" placeholder="0"
-                                                            value={item.quantity} onChange={(e) => handleNumberChange(index, 'quantity', e.target.value)} required />
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        <input type="text" inputMode="decimal" className="grid-input num-input" placeholder="0"
-                                                            value={item.unitPrice} onChange={(e) => handleNumberChange(index, 'unitPrice', e.target.value)} required />
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        <input type="text" inputMode="decimal" className="grid-input num-input" placeholder="0"
-                                                            value={item.sellingPrice} onChange={(e) => handleNumberChange(index, 'sellingPrice', e.target.value)} required />
-                                                    </td>
-                                                    <td className="grid-td-pad text-bold-slate">
-                                                        {item.totalPrice.toLocaleString()}
-                                                    </td>
-                                                    <td className="grid-td-pad">
-                                                        {items.length > 1 && (
-                                                            <button type="button" className="btn-remove-grid-item" onClick={() => removeRow(index)} title="Remove row">✕</button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                {renderTableGrid()}
+
+                                <button type="button" onClick={addNewRow} className="btn-add-another">
+                                    + Add Another Product
+                                </button>
+
+                                <div className="modal-footer">
+                                    <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+                                    <button type="submit" className="btn-save" onClick={addPurchase}>Save Purchase</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {showProductModal && (
+                    <div className="modal-overlay" onClick={onClose}>
+                        <div className="modal-content modal-content-wide" onClick={handleModalClick}>
+                            <div className="modal-header">
+                                <h2>Add New Product</h2>
+                                <button className="close-btn" onClick={onClose}>&times;</button>
+                            </div>
+
+                            <form className="modal-form">
+                                <div className="form-row-margin">
+                                    {renderTableGrid()}
                                 </div>
 
                                 <button type="button" onClick={addNewRow} className="btn-add-another">
@@ -585,7 +654,7 @@ export default function Inventory() {
 
                                 <div className="modal-footer">
                                     <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-                                    <button type="submit" className="btn-save" onClick={addProduct}>Save Products</button>
+                                    <button type="submit" className="btn-save" onClick={addProductOnly}>Save Products</button>
                                 </div>
                             </form>
                         </div>
