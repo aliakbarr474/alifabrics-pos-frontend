@@ -15,10 +15,10 @@ const formatNumber = (num, maxDecimals = 0) => {
 
 export default function Dashboard() {
   const [data, setData] = useState({
-    kpis: { 
-      revenue: 0, 
-      profit: 0, 
-      payables: 0, 
+    kpis: {
+      revenue: 0,
+      profit: 0,
+      payables: 0,
       totalCash: 0,
       totalBank: 0,
       totalBalance: 0,
@@ -30,10 +30,10 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  
+
   const [chartFilter, setChartFilter] = useState('weekly');
   const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
-  
+
   const [isPnlModalOpen, setIsPnlModalOpen] = useState(false);
   const [pnlFilter, setPnlFilter] = useState('today');
   const [pnlViewMode, setPnlViewMode] = useState('profit');
@@ -86,8 +86,8 @@ export default function Dashboard() {
     return <div className="loading-screen">Loading system metrics...</div>;
   }
 
-  const maxMeters = data?.charts?.topItems?.length > 0 
-    ? Math.max(...data.charts.topItems.map(item => Number(item.total_meters))) 
+  const maxMeters = data?.charts?.topItems?.length > 0
+    ? Math.max(...data.charts.topItems.map(item => Number(item.total_meters)))
     : 1;
 
   const isProfit = (data?.kpis?.profit || 0) >= 0;
@@ -101,32 +101,32 @@ export default function Dashboard() {
           <h1>Dashboard Overview</h1>
           <p>Real-time business performance indicators.</p>
           {fetchError && (
-             <div className="error-banner">
-               Error: {fetchError}
-             </div>
+            <div className="error-banner">
+              Error: {fetchError}
+            </div>
           )}
         </header>
 
         <div className="kpi-grid">
-          <KpiCard 
-            title="Total Balance" 
-            value={`Rs. ${formatNumber(data?.kpis?.totalBalance)}`}
-            icon={<Wallet size={22} color="#1C1917" />} 
-            bgColor="#F5F5F5" 
+          <KpiCard
+            title="Today's Sale"
+            value={`Rs. ${formatNumber(data?.kpis?.revenue)}`}
+            icon={<DollarSign size={22} color="#1C1917" />}
+            bgColor="#F5F5F5"
             onClick={() => setIsBalanceModalOpen(true)}
             isClickable={true}
           />
-          <KpiCard 
-            title="Vendor Payables" 
-            value={`Rs. ${formatNumber(data?.kpis?.payables)}`} 
-            icon={<CreditCard size={22} color="#BCA89F" />} 
-            bgColor="#FAF8F7" 
+          <KpiCard
+            title="Vendor Payables"
+            value={`Rs. ${formatNumber(data?.kpis?.payables)}`}
+            icon={<CreditCard size={22} color="#BCA89F" />}
+            bgColor="#FAF8F7"
           />
-          <KpiCard 
-            title={isProfit ? "Today's Profit" : "Today's Loss"} 
+          <KpiCard
+            title={isProfit ? "Today's Profit" : "Today's Loss"}
             value={`Rs. ${formatNumber(Math.abs(data?.kpis?.profit || 0))}`}
-            icon={isProfit ? <TrendingUp size={22} color="#10b981" /> : <TrendingDown size={22} color="#ef4444" />} 
-            bgColor={isProfit ? "#ecfdf5" : "#fef2f2"} 
+            icon={isProfit ? <TrendingUp size={22} color="#10b981" /> : <TrendingDown size={22} color="#ef4444" />}
+            bgColor={isProfit ? "#ecfdf5" : "#fef2f2"}
             valueColor={isProfit ? "#10b981" : "#ef4444"}
             onClick={() => { setPnlViewMode(isProfit ? 'profit' : 'loss'); setPnlFilter('today'); setIsPnlModalOpen(true); }}
             isClickable={true}
@@ -137,9 +137,9 @@ export default function Dashboard() {
           <div className="chart-container">
             <div className="chart-header-row">
               <h2>Revenue & Profit Trend</h2>
-              <select 
-                className="filter-dropdown" 
-                value={chartFilter} 
+              <select
+                className="filter-dropdown"
+                value={chartFilter}
                 onChange={(e) => setChartFilter(e.target.value)}
               >
                 <option value="today">Today</option>
@@ -154,8 +154,8 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E7E5E4" />
                   <XAxis dataKey="date" tick={{ fill: '#78716C', fontSize: 12 }} />
                   <YAxis tick={{ fill: '#78716C', fontSize: 12 }} width={80} tickFormatter={(tick) => formatNumber(tick)} />
-                  <RechartsTooltip 
-                    contentStyle={{ backgroundColor: '#1C1917', color: '#fff', borderRadius: '8px', border: 'none' }} 
+                  <RechartsTooltip
+                    contentStyle={{ backgroundColor: '#1C1917', color: '#fff', borderRadius: '8px', border: 'none' }}
                     formatter={(value) => `Rs. ${formatNumber(value)}`}
                   />
                   <Line type="monotone" dataKey="daily_revenue" stroke="#1C1917" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Revenue" />
@@ -186,11 +186,11 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip 
-                      contentStyle={{ backgroundColor: '#1C1917', color: '#fff', borderRadius: '8px', border: 'none' }} 
-                      formatter={(value) => `Rs. ${formatNumber(value)}`} 
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: '#1C1917', color: '#fff', borderRadius: '8px', border: 'none' }}
+                      formatter={(value) => `Rs. ${formatNumber(value)}`}
                     />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}/>
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -215,15 +215,15 @@ export default function Dashboard() {
                       <span className="top-item-minimal-value">{formatNumber(item.total_meters, 2)}m</span>
                     </div>
                     <div className="top-item-minimal-bar-bg">
-                      <div 
-                        className="top-item-minimal-bar-fill" 
+                      <div
+                        className="top-item-minimal-bar-fill"
                         style={{ width: `${(Number(item.total_meters) / maxMeters) * 100}%` }}
                       ></div>
                     </div>
                   </div>
                 ))
               ) : (
-                 <p className="empty-state">No sales data yet.</p>
+                <p className="empty-state">No sales data yet.</p>
               )}
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function Dashboard() {
                         <td className="discount-text">Rs. {formatNumber(expense.amount)}</td>
                       </tr>
                     )) : (
-                      <tr><td colSpan="5" className="empty-state" style={{padding: '24px 0'}}>No recent payments.</td></tr>
+                      <tr><td colSpan="5" className="empty-state" style={{ padding: '24px 0' }}>No recent payments.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -306,6 +306,12 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="modal-body">
+              <div style={{ textAlign: 'center', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #E2E8F0' }}>
+                <p style={{ color: '#78716C', margin: '0 0 4px 0', fontSize: '14px' }}>Total System Balance</p>
+                <h1 style={{ color: '#1C1917', margin: 0, fontSize: '32px' }}>
+                  Rs. {formatNumber(data?.kpis?.totalBalance)}
+                </h1>
+              </div>
               <div className="balance-breakdown">
                 <div className="balance-item">
                   <div className="balance-icon cash-icon">
@@ -318,7 +324,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="balance-item" style={{ alignItems: 'flex-start' }}>
                   <div className="balance-icon bank-icon">
                     <CreditCard size={24} color="#1C1917" />
@@ -333,7 +339,7 @@ export default function Dashboard() {
                       <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #E2E8F0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {data.kpis.bankBalances.map((bank, index) => (
                           <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                            <span style={{ color: '#475569' }}>{bank.bank_name} <span style={{fontSize: '12px', color: '#94A3B8'}}>({bank.account_title})</span></span>
+                            <span style={{ color: '#475569' }}>{bank.bank_name} <span style={{ fontSize: '12px', color: '#94A3B8' }}>({bank.account_title})</span></span>
                             <span style={{ fontWeight: 600, color: '#0F172A' }}>Rs. {formatNumber(bank.balance)}</span>
                           </div>
                         ))}
@@ -352,9 +358,9 @@ export default function Dashboard() {
           <div className="modal-content pnl-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{pnlViewMode === 'profit' ? 'Profit Report' : 'Loss Report'}</h2>
-              <select 
-                className="filter-dropdown" 
-                value={pnlFilter} 
+              <select
+                className="filter-dropdown"
+                value={pnlFilter}
                 onChange={(e) => setPnlFilter(e.target.value)}
               >
                 <option value="today">Today</option>
@@ -398,8 +404,8 @@ export default function Dashboard() {
 }
 
 const KpiCard = ({ title, value, icon, bgColor, onClick, isClickable, valueColor }) => (
-  <div 
-    className={`kpi-card ${isClickable ? 'clickable' : ''}`} 
+  <div
+    className={`kpi-card ${isClickable ? 'clickable' : ''}`}
     onClick={onClick}
   >
     <div className="kpi-info">
