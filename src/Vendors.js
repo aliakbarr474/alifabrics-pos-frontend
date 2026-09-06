@@ -21,6 +21,16 @@ export default function Vendors() {
     const [showLedger, setShowLedger] = useState(false);
     const [vendorLedger, setVendorLedger] = useState([]);
 
+    // --- Helper to handle expired tokens ---
+    const handleAuthError = (status) => {
+        if (status === 401 || status === 403) {
+            localStorage.clear();
+            window.location.href = '/';
+            return true;
+        }
+        return false;
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
@@ -52,12 +62,17 @@ export default function Vendors() {
                 })
             });
 
+            if (handleAuthError(response.status)) return;
+
             if (response.ok) {
                 alert('Vendor added successfully!');
 
                 const refresh = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                if (handleAuthError(refresh.status)) return;
+                
                 const refreshData = await refresh.json();
                 setVendorData(refreshData);
 
@@ -77,6 +92,8 @@ export default function Vendors() {
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            if (handleAuthError(response.status)) return;
 
             if (!response.ok) {
                 throw new Error(`Error retrieving vendors: ${response.status}`);
@@ -106,6 +123,9 @@ export default function Vendors() {
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendor.id}/details`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            if (handleAuthError(response.status)) return;
+
             if (response.ok) {
                 const data = await response.json();
                 setVendorBrands(data.brands);
@@ -130,6 +150,7 @@ export default function Vendors() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
+            if (handleAuthError(response.status)) return;
             const data = await response.json();
 
             if (response.ok) {
@@ -149,6 +170,9 @@ export default function Vendors() {
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}/ledger`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            if (handleAuthError(response.status)) return;
+
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
