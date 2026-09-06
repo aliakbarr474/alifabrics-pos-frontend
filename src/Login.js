@@ -104,11 +104,11 @@ const Login = () => {
               <a href='#!' onClick={(e) => { e.preventDefault(); setShowSignup(true); }}>
                 here
               </a>
-            </p>
+            </p> */}
             
             <button type="submit" className="login-button">
               Sign In
-            </button> */}
+            </button>
           </form>
         </div>
 
