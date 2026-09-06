@@ -26,13 +26,13 @@ const App = () => {
           } 
         />
 
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/pos" element={<Pos />} />
-        <Route path='/vendors' element={<Vendors />} />
-        <Route path='/accounts' element={<Accounts />} />
-        <Route path='/customers' element={<Customers />} />
-        <Route path='/invoices' element={<Invoices />} />
-        <Route path='/settings' element={<Settings />} />
+        <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+        <Route path="/pos" element={<ProtectedRoute><Pos /></ProtectedRoute>} />
+        <Route path='/vendors' element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
+        <Route path='/accounts' element={<ProtectedRoute><Accounts /></ProtectedRoute>} />
+        <Route path='/customers' element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+        <Route path='/invoices' element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+        <Route path='/settings' element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
