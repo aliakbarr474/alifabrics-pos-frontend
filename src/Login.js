@@ -70,7 +70,6 @@ const Login = () => {
     <div className="login-container">
       <div className={`card-wrapper ${showSignup ? 'show-signup' : ''}`}>
         
-        {/* === LOGIN CARD === */}
         <div className="form-card login-card">
           <h2 className="login-title">Ali Fabrics</h2>
           <p className="login-subtitle">Please enter your details to sign in</p>
@@ -100,7 +99,7 @@ const Login = () => {
               />
             </div>
 
-            <p style={{fontSize: '12px'}}>
+            {/* <p style={{fontSize: '12px'}}>
               Maybe register a user{' '}
               <a href='#!' onClick={(e) => { e.preventDefault(); setShowSignup(true); }}>
                 here
@@ -109,7 +108,7 @@ const Login = () => {
             
             <button type="submit" className="login-button">
               Sign In
-            </button>
+            </button> */}
           </form>
         </div>
 
