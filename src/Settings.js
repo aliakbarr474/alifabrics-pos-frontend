@@ -29,7 +29,10 @@ export default function Settings() {
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/users');
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data);
@@ -39,7 +42,10 @@ export default function Settings() {
 
     const fetchBankAccounts = async () => {
         try {
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts');
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (response.ok) {
                 const data = await response.json();
                 setBankAccounts(data);
@@ -58,9 +64,13 @@ export default function Settings() {
     const handleSave = async (e) => {
         e.preventDefault();
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/settings/brand', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ storeName, address, phone, currency }),
             });
             if (response.ok) {
@@ -78,9 +88,15 @@ export default function Settings() {
         if (!newUsername || !newPassword) return;
 
         try {
+            // Note: If /register is unprotected, the token is technically optional here,
+            // but we add it to remain consistent if you secure the registration route.
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ email: newUsername, password: newPassword }),
             });
 
@@ -105,8 +121,10 @@ export default function Settings() {
         if (!confirmDelete) return;
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/users/${userId}`, {
                 method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (response.ok) {
@@ -130,7 +148,11 @@ export default function Settings() {
     };
 
     const handleDownloadBackup = () => {
-        window.open(`https://alifabrics-pos-backend-production.up.railway.app/api/backup?table=${selectedTable}`, '_blank');
+        // Because a standard href/window.open cannot pass headers (like Bearer tokens),
+        // we append the token to the URL so the backend can extract it from req.query.token
+        // NOTE: Ensure your backend verifyToken middleware can read tokens from req.query.token for this specific route.
+        const token = localStorage.getItem('token');
+        window.open(`https://alifabrics-pos-backend-production.up.railway.app/api/backup?table=${selectedTable}&token=${token}`, '_blank');
     };
 
     const handleQrUpload = (e) => {
@@ -149,9 +171,13 @@ export default function Settings() {
         if (!newBankName || !newAccountTitle || !newAccountNumber) return;
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     bank_name: newBankName,
                     account_title: newAccountTitle,
@@ -178,9 +204,13 @@ export default function Settings() {
 
     const handleToggleBankStatus = async (id, currentStatus) => {
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/bank-accounts/${id}/toggle`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ is_active: !currentStatus })
             });
 

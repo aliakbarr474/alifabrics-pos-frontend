@@ -48,7 +48,10 @@ export default function Inventory() {
 
     const fetchInventory = async () => {
         try {
-            const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory');
+            const token = localStorage.getItem('token');
+            const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             if (Array.isArray(data)) {
                 setInventoryData(data);
@@ -61,7 +64,10 @@ export default function Inventory() {
     };
 
     useEffect(() => {
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
+        const token = localStorage.getItem('token');
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setVendorList(data);
@@ -76,7 +82,10 @@ export default function Inventory() {
             .map((name, i) => ({ id: `fallback-${i}`, name }));
 
         if (selectedVendor && !isNewVendor) {
-            fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${encodeURIComponent(selectedVendor)}/brands`)
+            const token = localStorage.getItem('token');
+            fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${encodeURIComponent(selectedVendor)}/brands`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (Array.isArray(data) && data.length > 0) {
@@ -176,7 +185,10 @@ export default function Inventory() {
         setProductHistory([]);
 
         try {
-            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${item.id}/history`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${item.id}/history`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (response.ok) {
                 const historyData = await response.json();
                 setProductHistory(historyData);
@@ -190,15 +202,17 @@ export default function Inventory() {
     };
 
     const handleDeleteProduct = async (e, productId, productName) => {
-        e.stopPropagation(); // Prevent opening the view modal row click
+        e.stopPropagation();
         
         if (!window.confirm(`Are you sure you want to delete "${productName}"?`)) {
             return;
         }
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${productId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             const data = await response.json();
@@ -266,9 +280,13 @@ export default function Inventory() {
         if (!finalVendorName) return alert("Missing: Vendor");
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-product', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify({
                     vendorName: finalVendorName,
                     vendorPhone: isNewVendor ? customVendorPhone.trim() : null,
@@ -285,7 +303,9 @@ export default function Inventory() {
                 onClose();
                 fetchInventory();
                 
-                fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
+                fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
                     .then(res => res.json())
                     .then(data => {
                         if (Array.isArray(data)) setVendorList(data);
@@ -305,9 +325,13 @@ export default function Inventory() {
         if (!formattedItems) return;
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-single-product', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ items: formattedItems })
             });
 

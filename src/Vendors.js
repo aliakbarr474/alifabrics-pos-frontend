@@ -38,9 +38,13 @@ export default function Vendors() {
         const finalBalance = balance.trim();
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-vendors', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     vendorName: finalVendorName,
                     contact: finalContact,
@@ -51,7 +55,9 @@ export default function Vendors() {
             if (response.ok) {
                 alert('Vendor added successfully!');
 
-                const refresh = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors');
+                const refresh = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const refreshData = await refresh.json();
                 setVendorData(refreshData);
 
@@ -67,7 +73,10 @@ export default function Vendors() {
 
     const fetchVendors = async () => {
         try {
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors');
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
             if (!response.ok) {
                 throw new Error(`Error retrieving vendors: ${response.status}`);
@@ -93,7 +102,10 @@ export default function Vendors() {
         setVendorLedger([]);
 
         try {
-            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendor.id}/details`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendor.id}/details`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (response.ok) {
                 const data = await response.json();
                 setVendorBrands(data.brands);
@@ -105,15 +117,17 @@ export default function Vendors() {
     };
 
     const handleDeleteVendor = async (e, vendorId, vendorName) => {
-        e.stopPropagation(); // Prevent row click event from triggering view modal
+        e.stopPropagation();
 
         if (!window.confirm(`Are you sure you want to delete vendor "${vendorName}"?`)) {
             return;
         }
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             const data = await response.json();
@@ -131,7 +145,10 @@ export default function Vendors() {
 
     const fetchLedger = async (vendorId) => {
         try {
-            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}/ledger`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}/ledger`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {

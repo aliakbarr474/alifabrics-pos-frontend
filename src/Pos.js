@@ -26,27 +26,44 @@ export default function Pos() {
     const [currentInvoice, setCurrentInvoice] = useState(null);
 
     const fetchInventory = () => {
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory')
+        const token = localStorage.getItem('token');
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
-            .then(data => setProducts(data))
-            .catch(err => {});
+            .then(data => {
+                if (Array.isArray(data)) setProducts(data);
+                else setProducts([]);
+            })
+            .catch(err => setProducts([]));
     };
 
     const fetchCustomers = () => {
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/customers')
+        const token = localStorage.getItem('token');
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/customers', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
-            .then(data => setCustomers(data))
-            .catch(err => {});
+            .then(data => {
+                if (Array.isArray(data)) setCustomers(data);
+                else setCustomers([]);
+            })
+            .catch(err => setCustomers([]));
     };
 
     const fetchActiveBankAccounts = () => {
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active')
+        const token = localStorage.getItem('token');
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
-                setActiveBankAccounts(data);
-                if (data.length > 0) setSelectedBankAccountId(data[0].id);
+                if (Array.isArray(data)) {
+                    setActiveBankAccounts(data);
+                    if (data.length > 0) setSelectedBankAccountId(data[0].id);
+                } else setActiveBankAccounts([]);
             })
-            .catch(err => {});
+            .catch(err => setActiveBankAccounts([]));
     };
 
     useEffect(() => {
@@ -169,9 +186,13 @@ export default function Pos() {
         }
 
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/checkout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     cart: cart,
                     subtotal: subtotal,

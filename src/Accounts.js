@@ -25,7 +25,10 @@ export default function Accounts() {
     const [payments, setPayments] = useState([]);
 
     useEffect(() => {
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors')
+        const token = localStorage.getItem('token');
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setVendorList(data);
@@ -35,8 +38,11 @@ export default function Accounts() {
     }, []);
 
     const fetchPayments = async () => {
+        const token = localStorage.getItem('token');
         try {
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-payments');
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-payments', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const result = await response.json();
@@ -62,10 +68,15 @@ export default function Accounts() {
         if (!method) return alert('Select a valid method');
         if (!selectedVendor) return alert('Select a valid vendor');
 
+        const token = localStorage.getItem('token');
+
         try {
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-payment', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     amount,
                     method,

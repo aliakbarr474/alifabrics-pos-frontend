@@ -17,10 +17,16 @@ export default function Invoices() {
     const [returnItemsList, setReturnItemsList] = useState([]);
 
     useEffect(() => {
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/invoices')
+        const token = localStorage.getItem('token');
+        fetch('https://alifabrics-pos-backend-production.up.railway.app/invoices', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
-            .then(data => setInvoices(data))
-            .catch(err => console.error(err));
+            .then(data => {
+                if (Array.isArray(data)) setInvoices(data);
+                else setInvoices([]);
+            })
+            .catch(err => setInvoices([]));
     }, []);
 
     const handlePrint = useReactToPrint({
@@ -30,12 +36,15 @@ export default function Invoices() {
 
     const generatePDF = async (invoice) => {
         try {
-            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (res.ok) {
                 const items = await res.json();
                 setSelectedInvoice(invoice);
                 setInvoiceItems(items);
-                setShowReceiptModal(true); // Opens the visual modal popup on screen
+                setShowReceiptModal(true);
             }
         } catch (error) {
             alert("Failed to fetch invoice details.");
@@ -44,7 +53,10 @@ export default function Invoices() {
 
     const openReturnModal = async (invoice) => {
         try {
-            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (res.ok) {
                 const items = await res.json();
                 setReturnInvoice(invoice);
@@ -73,9 +85,13 @@ export default function Invoices() {
         const totalRefund = itemsToReturn.reduce((sum, item) => sum + (item.returnQty * item.sellingPrice), 0);
 
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/return', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     saleId: returnInvoice.id,
                     customerId: returnInvoice.customer_id,
@@ -171,7 +187,6 @@ export default function Invoices() {
                 </div>
             </div>
 
-            {/* RECEIPT PREVIEW MODAL */}
             {showReceiptModal && selectedInvoice && (
                 <div className="modal-overlay" onClick={() => setShowReceiptModal(false)}>
                     <div className="modal-content view-modal" onClick={e => e.stopPropagation()} style={{ width: '380px' }}>
