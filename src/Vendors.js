@@ -48,7 +48,7 @@ export default function Vendors() {
         const finalBalance = balance.trim();
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-vendors', {
                 method: 'POST',
                 headers: { 
@@ -88,7 +88,7 @@ export default function Vendors() {
 
     const fetchVendors = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -119,7 +119,7 @@ export default function Vendors() {
         setVendorLedger([]);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendor.id}/details`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -144,7 +144,7 @@ export default function Vendors() {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -166,7 +166,7 @@ export default function Vendors() {
 
     const fetchLedger = async (vendorId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}/ledger`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });

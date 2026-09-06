@@ -17,7 +17,7 @@ export default function Invoices() {
     const [returnItemsList, setReturnItemsList] = useState([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         fetch('https://alifabrics-pos-backend-production.up.railway.app/invoices', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -36,7 +36,7 @@ export default function Invoices() {
 
     const generatePDF = async (invoice) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -53,7 +53,7 @@ export default function Invoices() {
 
     const openReturnModal = async (invoice) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -85,7 +85,7 @@ export default function Invoices() {
         const totalRefund = itemsToReturn.reduce((sum, item) => sum + (item.returnQty * item.sellingPrice), 0);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/return', {
                 method: 'POST',
                 headers: { 

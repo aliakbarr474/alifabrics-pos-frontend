@@ -51,7 +51,7 @@ export default function Dashboard() {
   }, [pnlFilter, isPnlModalOpen]);
 
   const fetchDashboardData = (filter) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('pos_token');
     fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/dashboard/summary?filter=${filter}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   const fetchPnlData = (filter) => {
     setPnlLoading(true);
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('pos_token');
     fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/dashboard/pnl?filter=${filter}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })

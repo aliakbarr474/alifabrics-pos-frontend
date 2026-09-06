@@ -29,7 +29,7 @@ export default function Settings() {
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -42,7 +42,7 @@ export default function Settings() {
 
     const fetchBankAccounts = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -64,7 +64,7 @@ export default function Settings() {
     const handleSave = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/settings/brand', {
                 method: 'POST',
                 headers: { 
@@ -88,9 +88,7 @@ export default function Settings() {
         if (!newUsername || !newPassword) return;
 
         try {
-            // Note: If /register is unprotected, the token is technically optional here,
-            // but we add it to remain consistent if you secure the registration route.
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/register', {
                 method: 'POST',
                 headers: { 
@@ -121,7 +119,7 @@ export default function Settings() {
         if (!confirmDelete) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/users/${userId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -148,10 +146,7 @@ export default function Settings() {
     };
 
     const handleDownloadBackup = () => {
-        // Because a standard href/window.open cannot pass headers (like Bearer tokens),
-        // we append the token to the URL so the backend can extract it from req.query.token
-        // NOTE: Ensure your backend verifyToken middleware can read tokens from req.query.token for this specific route.
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         window.open(`https://alifabrics-pos-backend-production.up.railway.app/api/backup?table=${selectedTable}&token=${token}`, '_blank');
     };
 
@@ -171,7 +166,7 @@ export default function Settings() {
         if (!newBankName || !newAccountTitle || !newAccountNumber) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
                 method: 'POST',
                 headers: { 
@@ -204,7 +199,7 @@ export default function Settings() {
 
     const handleToggleBankStatus = async (id, currentStatus) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/bank-accounts/${id}/toggle`, {
                 method: 'PATCH',
                 headers: { 

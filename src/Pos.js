@@ -26,7 +26,7 @@ export default function Pos() {
     const [currentInvoice, setCurrentInvoice] = useState(null);
 
     const fetchInventory = () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -39,7 +39,7 @@ export default function Pos() {
     };
 
     const fetchCustomers = () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         fetch('https://alifabrics-pos-backend-production.up.railway.app/customers', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -52,7 +52,7 @@ export default function Pos() {
     };
 
     const fetchActiveBankAccounts = () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         fetch('https://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -186,7 +186,7 @@ export default function Pos() {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/checkout', {
                 method: 'POST',
                 headers: { 

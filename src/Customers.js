@@ -26,7 +26,7 @@ export default function Customers() {
 
     const fetchCustomers = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/customers', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -50,7 +50,7 @@ export default function Customers() {
         if (!historyData[customer.id]) {
             setHistoryLoading(true);
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('pos_token');
                 const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/customers/${customer.id}/history`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -77,7 +77,7 @@ export default function Customers() {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/customers/${customerId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -119,7 +119,7 @@ export default function Customers() {
         if (!newCustomerName) return alert("Missing: Customer Name");
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/customers', {
                 method: 'POST',
                 headers: { 
@@ -156,7 +156,7 @@ export default function Customers() {
         if (!paymentAmount) return alert("Missing: Amount");
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('pos_token');
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-customer-payment', {
                 method: 'POST',
                 headers: { 

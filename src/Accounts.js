@@ -25,7 +25,7 @@ export default function Accounts() {
     const [payments, setPayments] = useState([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         fetch('https://alifabrics-pos-backend-production.up.railway.app/vendors', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
