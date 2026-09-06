@@ -189,6 +189,31 @@ export default function Inventory() {
         setViewProduct(null);
     };
 
+    const handleDeleteProduct = async (e, productId, productName) => {
+        e.stopPropagation(); // Prevent opening the view modal row click
+        
+        if (!window.confirm(`Are you sure you want to delete "${productName}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${productId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Product deleted successfully.');
+                fetchInventory();
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            alert('Failed to connect to the server.');
+        }
+    };
+
     const processItemsData = () => {
         for (const item of items) {
             if (item.categoryMessage || item.unitMessage) {
@@ -523,6 +548,7 @@ export default function Inventory() {
                                 <th>Stock</th>
                                 <th>Cost Price</th>
                                 <th>Selling Price</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -539,6 +565,16 @@ export default function Inventory() {
                                         </td>
                                         <td>PKR {Number(item.unitPrice).toLocaleString()}</td>
                                         <td>PKR {Number(item.sellingPrice).toLocaleString()}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button 
+                                                className="remove-btn" 
+                                                onClick={(e) => handleDeleteProduct(e, item.id, item.productName)}
+                                                title="Delete Product"
+                                                style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 'bold' }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
