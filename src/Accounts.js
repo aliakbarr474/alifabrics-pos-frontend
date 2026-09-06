@@ -38,7 +38,7 @@ export default function Accounts() {
     }, []);
 
     const fetchPayments = async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('pos_token');
         try {
             const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-payments', {
                 headers: { 'Authorization': `Bearer ${token}` }
