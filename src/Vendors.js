@@ -38,7 +38,7 @@ export default function Vendors() {
         const finalBalance = balance.trim();
 
         try {
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app:5000/add-vendors', {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/add-vendors', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -65,22 +65,22 @@ export default function Vendors() {
         }
     }
 
-    useEffect(() => {
-        const fetchVendors = async () => {
-            try {
-                const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors');
+    const fetchVendors = async () => {
+        try {
+            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/get-vendors');
 
-                if (!response.ok) {
-                    throw new Error(`Error retrieving vendors: ${response.status}`);
-                }
-
-                const result = await response.json();
-                setVendorData(result);
-            } catch (error) {
-                console.log('Error occured: ', error);
+            if (!response.ok) {
+                throw new Error(`Error retrieving vendors: ${response.status}`);
             }
-        }
 
+            const result = await response.json();
+            setVendorData(result);
+        } catch (error) {
+            console.log('Error occured: ', error);
+        }
+    };
+
+    useEffect(() => {
         fetchVendors();
     }, []);
 
@@ -101,6 +101,31 @@ export default function Vendors() {
             }
         } catch (error) {
             console.log("Failed to fetch vendor details", error);
+        }
+    };
+
+    const handleDeleteVendor = async (e, vendorId, vendorName) => {
+        e.stopPropagation(); // Prevent row click event from triggering view modal
+
+        if (!window.confirm(`Are you sure you want to delete vendor "${vendorName}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Vendor deleted successfully.');
+                fetchVendors();
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            alert('Failed to connect to the server.');
         }
     };
 
@@ -152,6 +177,7 @@ export default function Vendors() {
                                 <th>Vendor</th>
                                 <th>Contact</th>
                                 <th>Balance</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
 
@@ -162,6 +188,16 @@ export default function Vendors() {
                                         <td style={{ textTransform: 'capitalize' }}><strong>{item.contact_person}</strong></td>
                                         <td><strong>{item.phone}</strong></td>
                                         <td><strong>PKR {Number(item.current_balance).toLocaleString()}</strong></td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button 
+                                                className="remove-btn" 
+                                                onClick={(e) => handleDeleteVendor(e, item.id, item.contact_person)}
+                                                title="Delete Vendor"
+                                                style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 'bold' }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             }

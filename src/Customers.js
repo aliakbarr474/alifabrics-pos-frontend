@@ -4,29 +4,23 @@ import './Customers.css';
 import './Inventory.css';
 
 export default function Customers() {
-    // Modal states
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-    // Data states
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Selected customer & history
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [historyData, setHistoryData] = useState({});
     const [historyLoading, setHistoryLoading] = useState(false);
 
-    // Search & Filter
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('All');
 
-    // New Customer state
     const [newCustomerName, setNewCustomerName] = useState('');
     const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
-    // Payment state
     const [paymentMethod, setPaymentMethod] = useState('');
     const [paymentAmount, setPaymentAmount] = useState('');
 
@@ -66,6 +60,31 @@ export default function Customers() {
             } finally {
                 setHistoryLoading(false);
             }
+        }
+    };
+
+    const handleDeleteCustomer = async (e, customerId, customerName) => {
+        e.stopPropagation();
+
+        if (!window.confirm(`Are you sure you want to delete customer "${customerName}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/customers/${customerId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Customer deleted successfully.');
+                fetchCustomers();
+            } else {
+                alert(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            alert('Failed to connect to the server.');
         }
     };
 
@@ -143,7 +162,6 @@ export default function Customers() {
                 setPaymentAmount('');
                 setIsPaymentOpen(false);
                 
-                // Refresh customer data to update balance
                 fetchCustomers();
             } else {
                 alert(`Backend Error: ${data.message}`);
@@ -227,12 +245,13 @@ export default function Customers() {
                                     <th>Lifetime Spent</th>
                                     <th>Total Orders</th>
                                     <th>Added On</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredCustomers.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="empty-state">
+                                        <td colSpan="7" className="empty-state">
                                             {customers.length === 0 ? 'No customers found.' : 'No customers match your search.'}
                                         </td>
                                     </tr>
@@ -251,6 +270,16 @@ export default function Customers() {
                                             <td className="metric-bold">{Number(customer.total_spent || 0).toLocaleString()} PKR</td>
                                             <td>{customer.total_orders}</td>
                                             <td>{formatDate(customer.created_at)}</td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <button 
+                                                    className="remove-btn" 
+                                                    onClick={(e) => handleDeleteCustomer(e, customer.id, customer.name)}
+                                                    title="Delete Customer"
+                                                    style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 'bold' }}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -260,7 +289,6 @@ export default function Customers() {
                 </div>
             </div>
 
-            {/* History & Payment Modal */}
             {selectedCustomer && (
                 <div className="history-modal-overlay" onClick={closeHistoryModal}>
                     <div className="history-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -278,7 +306,6 @@ export default function Customers() {
                         </div>
 
                         <div className="history-modal-body">
-                            {/* Inner Payment Form */}
                             {isPaymentOpen ? (
                                 <form className="modal-form" onSubmit={handleAddPayment} style={{marginBottom: '20px', padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px'}}>
                                     <h3 style={{marginTop: 0}}>Process Payment</h3>
@@ -349,7 +376,6 @@ export default function Customers() {
                 </div>
             )}
 
-            {/* Add New Customer Modal */}
             {isAddCustomerOpen && (
                 <div className='modal-overlay' onClick={() => setIsAddCustomerOpen(false)}>
                     <div className='modal-content' onClick={(e) => e.stopPropagation()}>
