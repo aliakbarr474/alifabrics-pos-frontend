@@ -1,25 +1,21 @@
 import { useState, useEffect } from 'react';
 import './Settings.css';
 import Sidebar from './Sidebar';
+import { fetchWithAuth } from './api';
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('Users');
-
     const [storeName, setStoreName] = useState('My Store');
     const [address, setAddress] = useState('');
     const [phone, setPhone] = useState('');
     const [currency, setCurrency] = useState('PKR');
-
     const [users, setUsers] = useState([]);
     const [newUsername, setNewUsername] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [signupError, setSignupError] = useState('');
-
     const [waStatus, setWaStatus] = useState('disconnected');
     const [qrCodeUrl, setQrCodeUrl] = useState('');
-
     const [selectedTable, setSelectedTable] = useState('customers');
-
     const [bankAccounts, setBankAccounts] = useState([]);
     const [showAddBankModal, setShowAddBankModal] = useState(false);
     const [newBankName, setNewBankName] = useState('');
@@ -29,77 +25,52 @@ export default function Settings() {
 
     const fetchUsers = async () => {
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/users', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/api/users');
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data);
             }
-        } catch (error) { }
+        } catch (error) {}
     };
 
     const fetchBankAccounts = async () => {
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts');
             if (response.ok) {
                 const data = await response.json();
                 setBankAccounts(data);
             }
-        } catch (error) { }
+        } catch (error) {}
     };
 
     useEffect(() => {
-        if (activeTab === 'Users') {
-            fetchUsers();
-        } else if (activeTab === 'Bank Details') {
-            fetchBankAccounts();
-        }
+        if (activeTab === 'Users') fetchUsers();
+        else if (activeTab === 'Bank Details') fetchBankAccounts();
     }, [activeTab]);
 
     const handleSave = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/api/settings/brand', {
+            const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/api/settings/brand', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ storeName, address, phone, currency }),
             });
-            if (response.ok) {
-                alert('Brand settings saved successfully!');
-            } else {
-                alert('Failed to save settings.');
-            }
+            if (response.ok) alert('Brand settings saved successfully!');
+            else alert('Failed to save settings.');
         } catch (err) {
-            alert('Connection to server failed.');
+            if (err.message !== "Session expired") alert('Connection to server failed.');
         }
     };
 
     const handleAddUser = async (e) => {
         e.preventDefault();
         if (!newUsername || !newPassword) return;
-
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/register', {
+            const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/register', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ email: newUsername, password: newPassword }),
             });
-
             const data = await response.json();
-
             if (response.ok) {
                 alert('User added to database successfully.');
                 setNewUsername('');
@@ -110,29 +81,22 @@ export default function Settings() {
                 setSignupError(data.message || 'Registration failed');
             }
         } catch (err) {
-            setSignupError('Connection to server failed.');
+            if (err.message !== "Session expired") setSignupError('Connection to server failed.');
         }
     };
 
     const handleDeleteUser = async (userId) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this user?");
         if (!confirmDelete) return;
-
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/api/users/${userId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                fetchUsers();
-            } else {
+            const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/api/users/${userId}`, { method: 'DELETE' });
+            if (response.ok) fetchUsers();
+            else {
                 const data = await response.json();
                 alert(data.message || 'Failed to delete user.');
             }
         } catch (error) {
-            alert('Connection to server failed while deleting.');
+            if (error.message !== "Session expired") alert('Connection to server failed while deleting.');
         }
     };
 
@@ -154,9 +118,7 @@ export default function Settings() {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setNewQrCode(reader.result);
-            };
+            reader.onloadend = () => setNewQrCode(reader.result);
             reader.readAsDataURL(file);
         }
     };
@@ -164,23 +126,11 @@ export default function Settings() {
     const handleAddBank = async (e) => {
         e.preventDefault();
         if (!newBankName || !newAccountTitle || !newAccountNumber) return;
-
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
+            const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/bank-accounts', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    bank_name: newBankName,
-                    account_title: newAccountTitle,
-                    account_number: newAccountNumber,
-                    qr_code: newQrCode
-                })
+                body: JSON.stringify({ bank_name: newBankName, account_title: newAccountTitle, account_number: newAccountNumber, qr_code: newQrCode })
             });
-
             if (response.ok) {
                 alert('Bank account added successfully!');
                 setShowAddBankModal(false);
@@ -189,56 +139,37 @@ export default function Settings() {
                 setNewAccountNumber('');
                 setNewQrCode('');
                 fetchBankAccounts();
-            } else {
-                alert('Failed to add bank account.');
-            }
+            } else alert('Failed to add bank account.');
         } catch (err) {
-            alert('Connection to server failed.');
+            if (err.message !== "Session expired") alert('Connection to server failed.');
         }
     };
 
     const handleToggleBankStatus = async (id, currentStatus) => {
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/bank-accounts/${id}/toggle`, {
+            const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/bank-accounts/${id}/toggle`, {
                 method: 'PATCH',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ is_active: !currentStatus })
             });
-
-            if (response.ok) {
-                fetchBankAccounts();
-            }
+            if (response.ok) fetchBankAccounts();
         } catch (err) {
-            alert('Connection to server failed.');
+            if (err.message !== "Session expired") alert('Connection to server failed.');
         }
     };
 
     return (
         <div className='settings-layout'>
             <Sidebar />
-
             <div className='settings-side'>
                 <div className='settings-header'>
                     <h1>Settings</h1>
                     <button className='btn-save' onClick={handleSave}>Save Changes</button>
                 </div>
-
                 <div className="settings-tabs">
                     {['General', 'Users', 'Bank Details', 'WhatsApp', 'Backup'].map(tab => (
-                        <button
-                            key={tab}
-                            className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-                            onClick={() => setActiveTab(tab)}
-                        >
-                            {tab}
-                        </button>
+                        <button key={tab} className={`tab-btn ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>{tab}</button>
                     ))}
                 </div>
-
                 <div className="settings-content">
                     <form className="settings-form">
                         {activeTab === 'General' && (
@@ -272,11 +203,9 @@ export default function Settings() {
                                 </div>
                             </div>
                         )}
-
                         {activeTab === 'Users' && (
                             <div className="settings-section animate-fade">
                                 <h2>System Users</h2>
-
                                 <div className="table-wrapper" style={{ marginBottom: '30px' }}>
                                     <table className="settings-table">
                                         <thead>
@@ -290,20 +219,10 @@ export default function Settings() {
                                             {users.map(user => (
                                                 <tr key={user.id} className="user-row">
                                                     <td>#{user.id}</td>
-                                                    <td>
-                                                        <span className="username-text">
-                                                            {user.username}
-                                                        </span>
-                                                    </td>
+                                                    <td><span className="username-text">{user.username}</span></td>
                                                     <td>
                                                         <div className="action-buttons">
-                                                            <button
-                                                                type="button"
-                                                                className="btn-remove"
-                                                                onClick={() => handleDeleteUser(user.id)}
-                                                            >
-                                                                Remove
-                                                            </button>
+                                                            <button type="button" className="btn-remove" onClick={() => handleDeleteUser(user.id)}>Remove</button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -311,7 +230,6 @@ export default function Settings() {
                                         </tbody>
                                     </table>
                                 </div>
-
                                 <h2>Add New User</h2>
                                 <div className="form-row">
                                     <div className="form-group">
@@ -329,14 +247,12 @@ export default function Settings() {
                                 </div>
                             </div>
                         )}
-
                         {activeTab === 'Bank Details' && (
                             <div className="settings-section animate-fade">
                                 <div className="section-header-row">
                                     <h2>Bank Accounts</h2>
                                     <button type="button" className="btn-save" onClick={() => setShowAddBankModal(true)}>+ Add Account</button>
                                 </div>
-
                                 <div className="table-wrapper">
                                     <table className="settings-table">
                                         <thead>
@@ -351,19 +267,13 @@ export default function Settings() {
                                         </thead>
                                         <tbody>
                                             {bankAccounts.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan="6" style={{ textAlign: 'center', color: '#64748B' }}>No bank accounts added yet.</td>
-                                                </tr>
+                                                <tr><td colSpan="6" style={{ textAlign: 'center', color: '#64748B' }}>No bank accounts added yet.</td></tr>
                                             ) : (
                                                 bankAccounts.map(account => (
                                                     <tr key={account.id}>
                                                         <td>
                                                             {account.qr_code ? (
-                                                                <img
-                                                                    src={account.qr_code}
-                                                                    alt="QR"
-                                                                    style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover', border: '1px solid #E2E8F0' }}
-                                                                />
+                                                                <img src={account.qr_code} alt="QR" style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover', border: '1px solid #E2E8F0' }} />
                                                             ) : (
                                                                 <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>None</span>
                                                             )}
@@ -372,16 +282,10 @@ export default function Settings() {
                                                         <td>{account.account_title}</td>
                                                         <td style={{ fontFamily: 'monospace' }}>{account.account_number}</td>
                                                         <td>
-                                                            <span className={`status-pill ${account.is_active ? 'active-pill' : 'inactive-pill'}`}>
-                                                                {account.is_active ? 'Active' : 'Inactive'}
-                                                            </span>
+                                                            <span className={`status-pill ${account.is_active ? 'active-pill' : 'inactive-pill'}`}>{account.is_active ? 'Active' : 'Inactive'}</span>
                                                         </td>
                                                         <td>
-                                                            <button
-                                                                type="button"
-                                                                className={account.is_active ? "btn-secondary-small" : "btn-view-details"}
-                                                                onClick={() => handleToggleBankStatus(account.id, account.is_active)}
-                                                            >
+                                                            <button type="button" className={account.is_active ? "btn-secondary-small" : "btn-view-details"} onClick={() => handleToggleBankStatus(account.id, account.is_active)}>
                                                                 {account.is_active ? 'Deactivate' : 'Activate'}
                                                             </button>
                                                         </td>
@@ -393,7 +297,6 @@ export default function Settings() {
                                 </div>
                             </div>
                         )}
-
                         {activeTab === 'WhatsApp' && (
                             <div className="settings-section animate-fade">
                                 <h2>WhatsApp Configuration</h2>
@@ -423,14 +326,10 @@ export default function Settings() {
                                 </div>
                             </div>
                         )}
-
                         {activeTab === 'Backup' && (
                             <div className="settings-section animate-fade">
                                 <h2>Database Export</h2>
-                                <p className="backup-description">
-                                    Select the specific database table you want to export. It will be downloaded as an Excel (.xlsx) file.
-                                </p>
-
+                                <p className="backup-description">Select the specific database table you want to export. It will be downloaded as an Excel (.xlsx) file.</p>
                                 <div className="backup-action-card">
                                     <div className="form-group" style={{ flex: 1 }}>
                                         <label>Select File/Table to Download</label>
@@ -443,13 +342,7 @@ export default function Settings() {
                                             <option value="vendors">Vendors</option>
                                         </select>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        className="btn-save backup-btn"
-                                        onClick={handleDownloadBackup}
-                                        style={{ alignSelf: 'flex-end', marginBottom: '4px' }}
-                                    >
+                                    <button type="button" className="btn-save backup-btn" onClick={handleDownloadBackup} style={{ alignSelf: 'flex-end', marginBottom: '4px' }}>
                                         Download {selectedTable}.xlsx
                                     </button>
                                 </div>
@@ -458,7 +351,6 @@ export default function Settings() {
                     </form>
                 </div>
             </div>
-
             {showAddBankModal && (
                 <div className="modal-backdrop" onClick={() => setShowAddBankModal(false)}>
                     <div className="modal-card" onClick={(e) => e.stopPropagation()}>

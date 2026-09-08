@@ -3,6 +3,7 @@ import './Invoices.css';
 import Sidebar from './Sidebar';
 import { useReactToPrint } from 'react-to-print';
 import Receipt from './Receipt';
+import { fetchWithAuth } from './api';
 
 export default function Invoices() {
     const [invoices, setInvoices] = useState([]);
@@ -10,23 +11,21 @@ export default function Invoices() {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [invoiceItems, setInvoiceItems] = useState([]);
     const receiptRef = useRef();
-
     const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [returnInvoice, setReturnInvoice] = useState(null);
     const [returnItemsList, setReturnItemsList] = useState([]);
 
     useEffect(() => {
-        const token = localStorage.getItem('pos_token');
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/invoices', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/invoices')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setInvoices(data);
                 else setInvoices([]);
             })
-            .catch(err => setInvoices([]));
+            .catch(err => {
+                if (err.message !== "Session expired") setInvoices([]);
+            });
     }, []);
 
     const handlePrint = useReactToPrint({
@@ -36,10 +35,7 @@ export default function Invoices() {
 
     const generatePDF = async (invoice) => {
         try {
-            const token = localStorage.getItem('pos_token');
-            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
             if (res.ok) {
                 const items = await res.json();
                 setSelectedInvoice(invoice);
@@ -47,16 +43,13 @@ export default function Invoices() {
                 setShowReceiptModal(true);
             }
         } catch (error) {
-            alert("Failed to fetch invoice details.");
+            if (error.message !== "Session expired") alert("Failed to fetch invoice details.");
         }
     };
 
     const openReturnModal = async (invoice) => {
         try {
-            const token = localStorage.getItem('pos_token');
-            const res = await fetch(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/invoices/${invoice.id}/items`);
             if (res.ok) {
                 const items = await res.json();
                 setReturnInvoice(invoice);
@@ -64,7 +57,7 @@ export default function Invoices() {
                 setShowReturnModal(true);
             }
         } catch (error) {
-            alert("Failed to fetch invoice details.");
+            if (error.message !== "Session expired") alert("Failed to fetch invoice details.");
         }
     };
 
@@ -72,39 +65,22 @@ export default function Invoices() {
         let num = Number(val);
         if (num > maxQty) num = maxQty;
         if (num < 0) num = 0;
-
-        setReturnItemsList(prev => prev.map(item =>
-            item.id === itemId ? { ...item, returnQty: num } : item
-        ));
+        setReturnItemsList(prev => prev.map(item => item.id === itemId ? { ...item, returnQty: num } : item));
     };
 
     const submitReturn = async () => {
         const itemsToReturn = returnItemsList.filter(item => item.returnQty > 0);
         if (itemsToReturn.length === 0) return alert("Select at least one item to return.");
-
         const totalRefund = itemsToReturn.reduce((sum, item) => sum + (item.returnQty * item.sellingPrice), 0);
-
         try {
-            const token = localStorage.getItem('pos_token');
-            const res = await fetch('https://alifabrics-pos-backend-production.up.railway.app/return', {
+            const res = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/return', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({
-                    saleId: returnInvoice.id,
-                    customerId: returnInvoice.customer_id,
-                    returnItems: itemsToReturn.map(item => ({
-                        id: item.id,
-                        quantity: item.returnQty,
-                        sellingPrice: item.sellingPrice,
-                        refundAmount: item.returnQty * item.sellingPrice
-                    })),
+                    saleId: returnInvoice.id, customerId: returnInvoice.customer_id,
+                    returnItems: itemsToReturn.map(item => ({ id: item.id, quantity: item.returnQty, sellingPrice: item.sellingPrice, refundAmount: item.returnQty * item.sellingPrice })),
                     totalRefund: totalRefund
                 })
             });
-
             if (res.ok) {
                 setShowReturnModal(false);
                 alert("Return processed successfully!");
@@ -114,7 +90,7 @@ export default function Invoices() {
                 alert(err.message);
             }
         } catch (error) {
-            alert("Failed to connect to server.");
+            if (error.message !== "Session expired") alert("Failed to connect to server.");
         }
     };
 
@@ -126,28 +102,16 @@ export default function Invoices() {
     return (
         <div className="invoices-layout">
             <Sidebar />
-
             <div className="invoices-side">
                 <div className="invoices-header">
                     <h1>Invoices</h1>
-                    <input
-                        type="text"
-                        placeholder="Search invoice number..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-input"
-                    />
+                    <input type="text" placeholder="Search invoice number..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" />
                 </div>
-
                 <div className="table-wrapper">
                     <table className="invoices-table">
                         <thead>
                             <tr>
-                                <th>Invoice No.</th>
-                                <th>Date</th>
-                                <th>Customer</th>
-                                <th>Net Total</th>
-                                <th style={{ textAlign: 'right' }}>Action</th>
+                                <th>Invoice No.</th><th>Date</th><th>Customer</th><th>Net Total</th><th style={{ textAlign: 'right' }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -159,28 +123,14 @@ export default function Invoices() {
                                     <td>{inv.net_total.toLocaleString()} PKR</td>
                                     <td style={{ textAlign: 'right' }}>
                                         <div className="action-buttons">
-                                            <button
-                                                className="return-btn"
-                                                onClick={() => openReturnModal(inv)}
-                                            >
-                                                Return
-                                            </button>
-                                            <button
-                                                className="pdf-btn"
-                                                onClick={() => generatePDF(inv)}
-                                            >
-                                                View PDF
-                                            </button>
+                                            <button className="return-btn" onClick={() => openReturnModal(inv)}>Return</button>
+                                            <button className="pdf-btn" onClick={() => generatePDF(inv)}>View PDF</button>
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                             {filteredInvoices.length === 0 && (
-                                <tr>
-                                    <td colSpan="5" className="empty-state">
-                                        No invoices found matching your search.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan="5" className="empty-state">No invoices found matching your search.</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -197,24 +147,12 @@ export default function Invoices() {
                             </div>
                             <button className="close-btn" onClick={() => setShowReceiptModal(false)}>✕</button>
                         </div>
-
                         <div className="modal-form" style={{ padding: '15px', maxHeight: '450px', overflowY: 'auto', background: '#f9f9f9' }}>
-                            <Receipt
-                                ref={receiptRef}
-                                cart={invoiceItems}
-                                subtotal={selectedInvoice.total_amount}
-                                discount={selectedInvoice.discount}
-                                netTotal={selectedInvoice.net_total}
-                                saleId={selectedInvoice.id}
-                                invoiceNumber={selectedInvoice.invoice_number}
-                            />
+                            <Receipt ref={receiptRef} cart={invoiceItems} subtotal={selectedInvoice.total_amount} discount={selectedInvoice.discount} netTotal={selectedInvoice.net_total} saleId={selectedInvoice.id} invoiceNumber={selectedInvoice.invoice_number} />
                         </div>
-
                         <div className="modal-footer" style={{ padding: '15px 24px', display: 'flex', justifyContent: 'space-between' }}>
                             <button className="btn-cancel" onClick={() => setShowReceiptModal(false)} style={{ width: 'auto' }}>Close</button>
-                            <button className="btn-save" onClick={handlePrint} style={{ width: 'auto', backgroundColor: '#475569', color: '#fff' }}>
-                                Save as PDF / Print
-                            </button>
+                            <button className="btn-save" onClick={handlePrint} style={{ width: 'auto', backgroundColor: '#475569', color: '#fff' }}>Save as PDF / Print</button>
                         </div>
                     </div>
                 </div>
@@ -233,36 +171,13 @@ export default function Invoices() {
                         <div className="modal-form" style={{ padding: '24px' }}>
                             <div className="history-table-container" style={{ maxHeight: '400px' }}>
                                 <table className="history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Price</th>
-                                            <th>Bought</th>
-                                            <th>Return Qty</th>
-                                            <th>Refund</th>
-                                        </tr>
-                                    </thead>
+                                    <thead><tr><th>Product</th><th>Price</th><th>Bought</th><th>Return Qty</th><th>Refund</th></tr></thead>
                                     <tbody>
                                         {returnItemsList.map(item => (
                                             <tr key={item.id}>
-                                                <td>{item.productName}</td>
-                                                <td>{item.sellingPrice}</td>
-                                                <td>{item.quantity} {item.unit}</td>
-                                                <td>
-                                                    <input
-                                                        type="number"
-                                                        className="return-qty-input"
-                                                        value={item.returnQty === 0 ? '' : item.returnQty}
-                                                        onChange={(e) => handleReturnQtyChange(item.id, e.target.value, item.quantity)}
-                                                        placeholder="0"
-                                                        max={item.quantity}
-                                                        min="0"
-                                                        step="0.01"
-                                                    />
-                                                </td>
-                                                <td style={{ fontWeight: 'bold' }}>
-                                                    {(item.returnQty * item.sellingPrice).toLocaleString()}
-                                                </td>
+                                                <td>{item.productName}</td><td>{item.sellingPrice}</td><td>{item.quantity} {item.unit}</td>
+                                                <td><input type="number" className="return-qty-input" value={item.returnQty === 0 ? '' : item.returnQty} onChange={(e) => handleReturnQtyChange(item.id, e.target.value, item.quantity)} placeholder="0" max={item.quantity} min="0" step="0.01" /></td>
+                                                <td style={{ fontWeight: 'bold' }}>{(item.returnQty * item.sellingPrice).toLocaleString()}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -270,9 +185,7 @@ export default function Invoices() {
                             </div>
                         </div>
                         <div className="modal-footer" style={{ padding: '20px 24px' }}>
-                            <label style={{ marginRight: 'auto' }}>
-                                Total Refund: {returnItemsList.reduce((sum, item) => sum + (item.returnQty * item.sellingPrice), 0).toLocaleString()} PKR
-                            </label>
+                            <label style={{ marginRight: 'auto' }}>Total Refund: {returnItemsList.reduce((sum, item) => sum + (item.returnQty * item.sellingPrice), 0).toLocaleString()} PKR</label>
                             <button className="btn-cancel" onClick={() => setShowReturnModal(false)} style={{ width: 'auto' }}>Cancel</button>
                             <button className="btn-save return-confirm-btn" onClick={submitReturn} style={{ width: 'auto', backgroundColor: '#EF4444', color: '#fff' }}>Confirm Return</button>
                         </div>
