@@ -4,6 +4,27 @@ import Sidebar from './Sidebar';
 import { useReactToPrint } from 'react-to-print';
 import Receipt from './Receipt';
 
+const fetchWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem('pos_token');
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+    };
+
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401 || response.status === 403) {
+        alert("Your session has expired. Please log in again to continue.");
+        localStorage.removeItem('pos_token');
+        window.location.href = '/login'; 
+        throw new Error("Session expired"); 
+    }
+
+    return response;
+};
+
 export default function Pos() {
     const [products, setProducts] = useState([]);
     const [customers, setCustomers] = useState([]);
@@ -26,36 +47,31 @@ export default function Pos() {
     const [currentInvoice, setCurrentInvoice] = useState(null);
 
     const fetchInventory = () => {
-        const token = localStorage.getItem('pos_token');
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/inventory', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/inventory')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setProducts(data);
                 else setProducts([]);
             })
-            .catch(err => setProducts([]));
+            .catch(err => {
+                if (err.message !== "Session expired") setProducts([]);
+            });
     };
 
     const fetchCustomers = () => {
-        const token = localStorage.getItem('pos_token');
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/customers', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/customers')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setCustomers(data);
                 else setCustomers([]);
             })
-            .catch(err => setCustomers([]));
+            .catch(err => {
+                if (err.message !== "Session expired") setCustomers([]);
+            });
     };
 
     const fetchActiveBankAccounts = () => {
-        const token = localStorage.getItem('pos_token');
-        fetch('https://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/api/bank-accounts/active')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -63,7 +79,9 @@ export default function Pos() {
                     if (data.length > 0) setSelectedBankAccountId(data[0].id);
                 } else setActiveBankAccounts([]);
             })
-            .catch(err => setActiveBankAccounts([]));
+            .catch(err => {
+                if (err.message !== "Session expired") setActiveBankAccounts([]);
+            });
     };
 
     useEffect(() => {
@@ -186,13 +204,8 @@ export default function Pos() {
         }
 
         try {
-            const token = localStorage.getItem('pos_token');
-            const response = await fetch('https://alifabrics-pos-backend-production.up.railway.app/checkout', {
+            const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/checkout', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({
                     cart: cart,
                     subtotal: subtotal,
@@ -222,7 +235,9 @@ export default function Pos() {
                 alert(`Checkout failed: ${errorData.message}`);
             }
         } catch (error) {
-            alert("Failed to connect to the server.");
+            if (error.message !== "Session expired") {
+                alert("Failed to connect to the server.");
+            }
         }
     };
 
