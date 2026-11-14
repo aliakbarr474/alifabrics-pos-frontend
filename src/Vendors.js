@@ -17,6 +17,7 @@ export default function Vendors() {
     const [vendorPurchases, setVendorPurchases] = useState([]);
     const [showLedger, setShowLedger] = useState(false);
     const [vendorLedger, setVendorLedger] = useState([]);
+    const [savingVendor, setSavingVendor] = useState(false);
 
     const formatDate = (dateString) => {
         if (!dateString) return '-';
@@ -32,27 +33,33 @@ export default function Vendors() {
         const finalVendorName = vendorName.trim();
         const finalContact = contact.trim();
         const finalBalance = balance.trim();
+        if (!finalVendorName || !finalContact || !finalBalance) return;
 
+        setSavingVendor(true);
         try {
             const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/add-vendors', {
                 method: 'POST',
                 body: JSON.stringify({ vendorName: finalVendorName, contact: finalContact, balance: finalBalance })
             });
+            const data = await response.json();
 
-            if (response.ok) {
-                alert('Vendor added successfully!');
-                const refresh = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/get-vendors');
-                const refreshData = await refresh.json();
-                setVendorData(refreshData);
-                setVendorName('');
-                setContact('');
-                setBalance('');
-                toggleAddClick(false);
+            if (!response.ok) {
+                alert(data.message || 'Unable to add vendor');
+                return;
             }
+
+            await fetchVendors();
+            setVendorName('');
+            setContact('');
+            setBalance('');
+            toggleAddClick(false);
+            alert('Vendor added successfully!');
         } catch (error) {
-            if (error.message !== "Session expired") console.log('Error occured: ', error);
+            if (error.message !== 'Session expired') alert('Could not save vendor. Please try again.');
+        } finally {
+            setSavingVendor(false);
         }
-    }
+    };
 
     const fetchVendors = async () => {
         try {
@@ -78,13 +85,13 @@ export default function Vendors() {
 
         try {
             const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendor.id}/details`);
-            if (response.ok) {
-                const data = await response.json();
-                setVendorBrands(data.brands);
-                setVendorPurchases(data.purchases);
-            }
+            if (!response.ok) throw new Error('Failed to fetch vendor details');
+            const data = await response.json();
+            setVendorBrands(data.brands || []);
+            setVendorPurchases(data.purchases || []);
+            setViewVendor(current => current?.id === vendor.id ? { ...current, current_balance: data.currentBalance } : current);
         } catch (error) {
-            if (error.message !== "Session expired") console.log("Failed to fetch vendor details", error);
+            if (error.message !== 'Session expired') alert('Could not load vendor details.');
         }
     };
 
@@ -109,19 +116,30 @@ export default function Vendors() {
     const fetchLedger = async (vendorId) => {
         try {
             const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/vendors/${vendorId}/ledger`);
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    let runningBalance = 0;
-                    const processedLedger = result.data.map(txn => {
-                        runningBalance += Number(txn.credit_owed) - Number(txn.debit_paid);
-                        return { ...txn, balance: runningBalance };
-                    });
-                    setVendorLedger(processedLedger);
-                }
+            if (!response.ok) throw new Error('Failed to load vendor ledger');
+            const result = await response.json();
+            if (!result.success) throw new Error('Failed to load vendor ledger');
+
+            let runningBalance = Number(result.openingBalance) || 0;
+            const processedLedger = [];
+            if (runningBalance !== 0) {
+                processedLedger.push({
+                    transaction_date: result.createdAt,
+                    type: 'Opening Balance',
+                    description: 'Balance brought forward',
+                    credit_owed: runningBalance > 0 ? runningBalance : 0,
+                    debit_paid: runningBalance < 0 ? Math.abs(runningBalance) : 0,
+                    balance: runningBalance
+                });
             }
+
+            for (const txn of result.data || []) {
+                runningBalance += Number(txn.credit_owed) - Number(txn.debit_paid);
+                processedLedger.push({ ...txn, balance: runningBalance });
+            }
+            setVendorLedger(processedLedger);
         } catch (error) {
-            if (error.message !== "Session expired") console.error("Failed to fetch ledger", error);
+            if (error.message !== 'Session expired') alert('Could not load the vendor ledger.');
         }
     };
 
@@ -155,11 +173,11 @@ export default function Vendors() {
                         <tbody>
                             {vendorData.map((item) => (
                                 <tr key={item.id} className="inventory-table-row" onClick={() => handleVendorClick(item)}>
-                                    <td style={{ textTransform: 'capitalize' }}><strong>{item.contact_person}</strong></td>
+                                    <td style={{ textTransform: 'capitalize' }}><strong>{item.company_name || item.contact_person}</strong></td>
                                     <td><strong>{item.phone}</strong></td>
                                     <td><strong>PKR {Number(item.current_balance).toLocaleString()}</strong></td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <button className="remove-btn" onClick={(e) => handleDeleteVendor(e, item.id, item.contact_person)} title="Delete Vendor" style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 'bold' }}>✕</button>
+                                        <button className="remove-btn" onClick={(e) => handleDeleteVendor(e, item.id, item.company_name || item.contact_person)} title="Delete Vendor" style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 'bold' }}>✕</button>
                                     </td>
                                 </tr>
                             ))}
@@ -190,7 +208,7 @@ export default function Vendors() {
                                 </div>
                                 <div className="modal-footer">
                                     <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-                                    <button type="submit" className="btn-save">Save Vendor</button>
+                                    <button type="submit" className="btn-save" disabled={savingVendor}>{savingVendor ? 'Saving...' : 'Save Vendor'}</button>
                                 </div>
                             </form>
                         </div>
@@ -201,8 +219,8 @@ export default function Vendors() {
                         <div className="modal-content view-modal" onClick={handleModalClick}>
                             <div className="modal-header">
                                 <div>
-                                    <h2 className="view-modal-title" style={{ textTransform: 'capitalize' }}>{viewVendor.contact_person}</h2>
-                                    <span className="view-modal-subtitle">{viewVendor.phone || 'No Contact Info'}</span>
+                                    <h2 className="view-modal-title" style={{ textTransform: 'capitalize' }}>{viewVendor.company_name || viewVendor.contact_person}</h2>
+                                    <span className="view-modal-subtitle">{viewVendor.phone || 'No Contact Info'} · Vendor ID: {viewVendor.id}</span>
                                 </div>
                                 <button className="close-btn" onClick={closeViewModal}>&times;</button>
                             </div>
@@ -230,6 +248,7 @@ export default function Vendors() {
                                             <table className="history-table">
                                                 <thead>
                                                     <tr>
+                                                        <th>Date</th>
                                                         <th>Product</th>
                                                         <th>Quantity</th>
                                                         <th style={{ textAlign: 'right' }}>Total Value</th>
@@ -238,8 +257,9 @@ export default function Vendors() {
                                                 <tbody>
                                                     {vendorPurchases.map((purchase, index) => (
                                                         <tr key={index}>
+                                                            <td>{formatDate(purchase.purchase_date)}</td>
                                                             <td>{purchase.product_name}</td>
-                                                            <td>{purchase.stock} {purchase.unit}</td>
+                                                            <td>{purchase.stock == null ? '-' : `${Number(purchase.stock).toLocaleString()} ${purchase.unit || ''}`}</td>
                                                             <td style={{ textAlign: 'right', fontWeight: '500' }}>{Number(purchase.total_price).toLocaleString()} PKR</td>
                                                         </tr>
                                                     ))}

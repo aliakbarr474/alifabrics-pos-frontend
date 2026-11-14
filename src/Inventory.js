@@ -101,7 +101,7 @@ export default function Inventory() {
     const removeRow = (index) => setItems(items.filter((_, i) => i !== index));
     const openPurchaseModal = () => { setItems([{ ...initialItem }]); setShowPurchaseModal(true); };
     const openProductModal = () => { setItems([{ ...initialItem }]); setShowProductModal(true); };
-    
+
     const onClose = () => {
         setShowPurchaseModal(false);
         setShowProductModal(false);
@@ -113,7 +113,7 @@ export default function Inventory() {
         setVendorInvoiceNumber('');
         setPurchaseDate(new Date().toISOString().split('T')[0]);
     };
-    
+
     const handleModalClick = (e) => e.stopPropagation();
 
     const handleRowClick = async (item) => {
@@ -125,7 +125,7 @@ export default function Inventory() {
                 const historyData = await response.json();
                 setProductHistory(historyData);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const closeViewModal = () => setViewProduct(null);
@@ -176,32 +176,52 @@ export default function Inventory() {
         return formattedItems;
     };
 
+
     const addPurchase = async (e) => {
         e.preventDefault();
         const formattedItems = processItemsData();
         if (!formattedItems) return;
-        const finalVendorName = isNewVendor ? customVendorName.trim() : (typeof selectedVendor === 'object' && selectedVendor !== null ? (selectedVendor.contact_person || selectedVendor.company_name) : selectedVendor);
+
+        const existingVendor = !isNewVendor
+            ? vendorList.find(v => String(v.id) === String(selectedVendor))
+            : null;
+
+        const finalVendorName = isNewVendor
+            ? customVendorName.trim()
+            : (existingVendor?.contact_person || existingVendor?.company_name || '');
+
         if (!finalVendorName) return alert("Missing: Vendor");
+
         try {
             const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/add-product', {
                 method: 'POST',
                 body: JSON.stringify({
-                    vendorName: finalVendorName, vendorPhone: isNewVendor ? customVendorPhone.trim() : null, vendorInvoiceNumber: vendorInvoiceNumber.trim(), purchaseDate: purchaseDate, items: formattedItems
+                    vendorId: isNewVendor ? null : existingVendor.id,
+                    vendorName: finalVendorName,
+                    vendorPhone: isNewVendor ? customVendorPhone.trim() : null,
+                    vendorInvoiceNumber: vendorInvoiceNumber.trim(),
+                    purchaseDate: purchaseDate,
+                    items: formattedItems
                 })
             });
+
             const data = await response.json();
+
             if (response.ok) {
                 alert('Purchase added successfully!');
                 onClose();
                 fetchInventory();
                 fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/vendors')
                     .then(res => res.json())
-                    .then(data => { if (Array.isArray(data)) setVendorList(data); });
+                    .then(data => {
+                        if (Array.isArray(data)) setVendorList(data);
+                    });
             } else alert(`Backend Error: ${data.message}`);
         } catch (error) {
             if (error.message !== "Session expired") alert('Failed to connect to the server.');
         }
     };
+
 
     const addProductOnly = async (e) => {
         e.preventDefault();
@@ -371,7 +391,7 @@ export default function Inventory() {
                                         ) : (
                                             <select value={selectedVendor} onChange={(e) => { if (e.target.value === "ADD_NEW") { setIsNewVendor(true); setSelectedVendor(''); } else { setSelectedVendor(e.target.value); } }} required>
                                                 <option value="" disabled>Select a vendor...</option>
-                                                {(Array.isArray(vendorList) ? vendorList : []).map((v) => { const displayName = v.company_name || v.contact_person || `Vendor #${v.id}`; return <option key={v.id} value={displayName}>{displayName}</option> })}
+                                                {(Array.isArray(vendorList) ? vendorList : []).map((v) => { const displayName = v.company_name || v.contact_person || `Vendor #${v.id}`; return <option key={v.id} value={String(v.id)}>{displayName}</option> })}
                                                 <option disabled>──────────</option><option value="ADD_NEW">➕ Add New Vendor...</option>
                                             </select>
                                         )}
