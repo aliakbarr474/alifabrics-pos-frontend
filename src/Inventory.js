@@ -21,6 +21,9 @@ export default function Inventory() {
     const [filterType, setFilterType] = useState('All');
     const [viewProduct, setViewProduct] = useState(null);
     const [productHistory, setProductHistory] = useState([]);
+    const [isEditingProduct, setIsEditingProduct] = useState(false);
+    const [isSavingProduct, setIsSavingProduct] = useState(false);
+    const [editProductData, setEditProductData] = useState({ productName: '', unitPrice: '', sellingPrice: '' });
     const initialItem = { productName: '', selectedBrand: '', isNewBrand: false, customBrandName: '', selectedCategory: '', isNewCategory: false, customCategoryName: '', categoryMessage: '', selectedUnit: '', isNewUnit: false, customUnitName: '', unitMessage: '', quantity: '', unitPrice: '', sellingPrice: '', totalPrice: 0 };
     const [items, setItems] = useState([{ ...initialItem }]);
 
@@ -118,6 +121,12 @@ export default function Inventory() {
 
     const handleRowClick = async (item) => {
         setViewProduct(item);
+        setIsEditingProduct(false);
+        setEditProductData({
+            productName: item.productName || '',
+            unitPrice: String(item.unitPrice ?? ''),
+            sellingPrice: String(item.sellingPrice ?? '')
+        });
         setProductHistory([]);
         try {
             const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${item.id}/history`);
@@ -128,7 +137,69 @@ export default function Inventory() {
         } catch (error) { }
     };
 
-    const closeViewModal = () => setViewProduct(null);
+    const closeViewModal = () => {
+        if (isSavingProduct) return;
+        setViewProduct(null);
+        setIsEditingProduct(false);
+    };
+
+    const startEditingProduct = () => {
+        if (!viewProduct) return;
+        setEditProductData({
+            productName: viewProduct.productName || '',
+            unitPrice: String(viewProduct.unitPrice ?? ''),
+            sellingPrice: String(viewProduct.sellingPrice ?? '')
+        });
+        setIsEditingProduct(true);
+    };
+    const cancelEditingProduct = () => setIsEditingProduct(false);
+
+    const handleSaveProduct = async (e) => {
+        e.preventDefault();
+        if (isSavingProduct || !viewProduct) return;
+
+        const productName = editProductData.productName.trim();
+        const unitPrice = editProductData.unitPrice.trim();
+        const sellingPrice = editProductData.sellingPrice.trim();
+        const validPrice = (value) => /^\d+(?:\.\d{1,2})?$/.test(value) && Number(value) <= 99999999.99;
+
+        if (!productName || productName.length > 255) {
+            alert('Enter a product name (maximum 255 characters).');
+            return;
+        }
+        if (!validPrice(unitPrice) || !validPrice(sellingPrice)) {
+            alert('Enter valid cost and selling prices (0 to 99,999,999.99, up to 2 decimal places).');
+            return;
+        }
+
+        setIsSavingProduct(true);
+        try {
+            const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${viewProduct.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ productName, unitPrice: Number(unitPrice), sellingPrice: Number(sellingPrice) })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                const updated = {
+                    productName: data.product.productName,
+                    unitPrice: data.product.unitPrice,
+                    sellingPrice: data.product.sellingPrice
+                };
+                setViewProduct(prev => prev ? { ...prev, ...updated } : prev);
+                setInventoryData(prev => prev.map(item => item.id === viewProduct.id ? { ...item, ...updated } : item));
+                setIsEditingProduct(false);
+                fetchInventory();
+                alert('Product updated successfully.');
+            } else {
+                alert(`Error: ${data.message || 'Unable to update product.'}`);
+            }
+        } catch (error) {
+            if (error.message !== 'Session expired') alert('Failed to connect to the server.');
+        } finally {
+            setIsSavingProduct(false);
+        }
+    };
 
     const handleDeleteProduct = async (e, productId, productName) => {
         e.stopPropagation();
@@ -445,33 +516,64 @@ export default function Inventory() {
                                 </div>
                                 <button className="close-btn" onClick={closeViewModal}>&times;</button>
                             </div>
-                            <div className="view-modal-stats">
-                                <div className="stat-box"><span className="stat-label">Current Stock</span><span className="stat-value">{viewProduct.stock} {viewProduct.unit || 'm'}</span></div>
-                                <div className="stat-box"><span className="stat-label">Cost Price</span><span className="stat-value">{Number(viewProduct.unitPrice).toLocaleString()} PKR</span></div>
-                                <div className="stat-box"><span className="stat-label">Selling Price</span><span className="stat-value">{Number(viewProduct.sellingPrice).toLocaleString()} PKR</span></div>
-                            </div>
-                            <h3 className="view-modal-section-title">Sales History</h3>
-                            <div className="history-table-container">
-                                {productHistory.length > 0 ? (
-                                    <table className="history-table">
-                                        <thead><tr><th>Date</th><th>Receipt #</th><th>Qty Sold</th><th className="history-total-header">Total</th></tr></thead>
-                                        <tbody>
-                                            {productHistory.map((record, index) => (
-                                                <tr key={index}>
-                                                    <td>{new Date(record.sale_date).toLocaleDateString()}</td>
-                                                    <td>#{record.receipt_no}</td>
-                                                    <td>{record.meters_sold} {viewProduct.unit || 'm'}</td>
-                                                    <td className="history-total-cell">{Number(record.subtotal).toLocaleString()} PKR</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                            {isEditingProduct ? (
+                                <form id="edit-product-form" className="product-edit-form" onSubmit={handleSaveProduct}>
+                                    <div className="form-group">
+                                        <label htmlFor="edit-product-name">Product Name</label>
+                                        <input id="edit-product-name" type="text" maxLength={255} value={editProductData.productName} onChange={(e) => setEditProductData(prev => ({ ...prev, productName: e.target.value }))} required />
+                                    </div>
+                                    <div className="product-edit-price-row">
+                                        <div className="form-group">
+                                            <label htmlFor="edit-product-cost">Cost Price (PKR)</label>
+                                            <input id="edit-product-cost" type="text" inputMode="decimal" value={editProductData.unitPrice} onChange={(e) => { if (/^\d*\.?\d{0,2}$/.test(e.target.value)) setEditProductData(prev => ({ ...prev, unitPrice: e.target.value })); }} required />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="edit-product-selling">Selling Price (PKR)</label>
+                                            <input id="edit-product-selling" type="text" inputMode="decimal" value={editProductData.sellingPrice} onChange={(e) => { if (/^\d*\.?\d{0,2}$/.test(e.target.value)) setEditProductData(prev => ({ ...prev, sellingPrice: e.target.value })); }} required />
+                                        </div>
+                                    </div>
+                                </form>
+                            ) : (
+                                <>
+                                    <div className="view-modal-stats">
+                                        <div className="stat-box"><span className="stat-label">Current Stock</span><span className="stat-value">{viewProduct.stock} {viewProduct.unit || 'm'}</span></div>
+                                        <div className="stat-box"><span className="stat-label">Cost Price</span><span className="stat-value">{Number(viewProduct.unitPrice).toLocaleString()} PKR</span></div>
+                                        <div className="stat-box"><span className="stat-label">Selling Price</span><span className="stat-value">{Number(viewProduct.sellingPrice).toLocaleString()} PKR</span></div>
+                                    </div>
+                                    <h3 className="view-modal-section-title">Sales History</h3>
+                                    <div className="history-table-container">
+                                        {productHistory.length > 0 ? (
+                                            <table className="history-table">
+                                                <thead><tr><th>Date</th><th>Receipt #</th><th>Qty Sold</th><th className="history-total-header">Total</th></tr></thead>
+                                                <tbody>
+                                                    {productHistory.map((record, index) => (
+                                                        <tr key={index}>
+                                                            <td>{new Date(record.sale_date).toLocaleDateString()}</td>
+                                                            <td>#{record.receipt_no}</td>
+                                                            <td>{record.meters_sold} {viewProduct.unit || 'm'}</td>
+                                                            <td className="history-total-cell">{Number(record.subtotal).toLocaleString()} PKR</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <div className="history-empty">No sales recorded for this item yet.</div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            <div className="view-modal-footer product-modal-actions">
+                                {isEditingProduct ? (
+                                    <>
+                                        <button type="button" className="btn-cancel" onClick={cancelEditingProduct} disabled={isSavingProduct}>Cancel</button>
+                                        <button type="submit" form="edit-product-form" className="btn-save" disabled={isSavingProduct}>{isSavingProduct ? 'Saving...' : 'Save Changes'}</button>
+                                    </>
                                 ) : (
-                                    <div className="history-empty">No sales recorded for this item yet.</div>
+                                    <>
+                                        <button type="button" className="edit-btn" onClick={startEditingProduct}>Edit Product</button>
+                                        <button type="button" className="btn-cancel" onClick={closeViewModal}>Close Record</button>
+                                    </>
                                 )}
-                            </div>
-                            <div className="view-modal-footer">
-                                <button type="button" className="btn-cancel w-full" onClick={closeViewModal}>Close Record</button>
                             </div>
                         </div>
                     </div>

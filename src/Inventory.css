@@ -634,3 +634,62 @@
         gap: 16px; 
     }
 }
+
+/* Product edit controls in the existing inventory detail modal */
+.product-edit-form {
+    padding: 20px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.product-edit-price-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.product-edit-form .form-group {
+    min-width: 0;
+}
+
+.product-edit-form .form-group input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.view-modal-footer.product-modal-actions {
+    gap: 12px;
+}
+
+.view-modal-footer.product-modal-actions > button {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    padding: 12px;
+    font-size: 15px;
+}
+
+.product-modal-actions button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .product-edit-form {
+        padding: 16px 16px 0;
+    }
+
+    .product-edit-price-row {
+        grid-template-columns: 1fr;
+    }
+
+    .view-modal-footer.product-modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .view-modal-footer.product-modal-actions > button {
+        width: 100%;
+    }
+}
