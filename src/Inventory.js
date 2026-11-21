@@ -103,7 +103,7 @@ export default function Inventory() {
     const addNewRow = () => setItems([...items, { ...initialItem }]);
     const removeRow = (index) => setItems(items.filter((_, i) => i !== index));
     const openPurchaseModal = () => { setItems([{ ...initialItem }]); setShowPurchaseModal(true); };
-    const openProductModal = () => { setItems([{ ...initialItem }]); setShowProductModal(true); };
+    const openProductModal = () => { setItems([{ ...initialItem }]); setIsNewVendor(false); setShowProductModal(true); };
 
     const onClose = () => {
         setShowPurchaseModal(false);
@@ -208,7 +208,7 @@ export default function Inventory() {
             const response = await fetchWithAuth(`https://alifabrics-pos-backend-production.up.railway.app/inventory/${productId}`, { method: 'DELETE' });
             const data = await response.json();
             if (response.ok) {
-                alert('Product deleted successfully.');
+                alert(data.message || 'Product deleted successfully.');
                 fetchInventory();
             } else {
                 alert(`Error: ${data.message}`);
@@ -298,14 +298,15 @@ export default function Inventory() {
         e.preventDefault();
         const formattedItems = processItemsData();
         if (!formattedItems) return;
+        if (!selectedVendor) return alert("Missing: Vendor");
         try {
             const response = await fetchWithAuth('https://alifabrics-pos-backend-production.up.railway.app/add-single-product', {
                 method: 'POST',
-                body: JSON.stringify({ items: formattedItems })
+                body: JSON.stringify({ vendorId: selectedVendor, items: formattedItems })
             });
             const data = await response.json();
             if (response.ok) {
-                alert('Products added successfully!');
+                alert(data.message || 'Products added successfully!');
                 onClose();
                 fetchInventory();
             } else alert(`Backend Error: ${data.message}`);
@@ -325,6 +326,15 @@ export default function Inventory() {
             default: return (item.productName?.toLowerCase().includes(query) || item.brandName?.toLowerCase().includes(query) || item.vendorName?.toLowerCase().includes(query) || item.category?.toLowerCase().includes(query));
         }
     });
+
+    const renderVendorSelect = (allowNew) => (
+        <select value={selectedVendor} onChange={(e) => { if (e.target.value === "ADD_NEW") { setIsNewVendor(true); setSelectedVendor(''); } else { setSelectedVendor(e.target.value); } }} required>
+            <option value="" disabled>Select a vendor...</option>
+            {(Array.isArray(vendorList) ? vendorList : []).map((v) => { const displayName = v.company_name || v.contact_person || `Vendor #${v.id}`; return <option key={v.id} value={String(v.id)}>{displayName}</option> })}
+            {allowNew && <option disabled>──────────</option>}
+            {allowNew && <option value="ADD_NEW">➕ Add New Vendor...</option>}
+        </select>
+    );
 
     const renderTableGrid = () => (
         <div className="table-wrapper visible-overflow table-margin">
@@ -459,13 +469,7 @@ export default function Inventory() {
                                                 </div>
                                                 <input type="text" placeholder="Phone Number (Optional)" value={customVendorPhone} onChange={(e) => setCustomVendorPhone(e.target.value)} />
                                             </div>
-                                        ) : (
-                                            <select value={selectedVendor} onChange={(e) => { if (e.target.value === "ADD_NEW") { setIsNewVendor(true); setSelectedVendor(''); } else { setSelectedVendor(e.target.value); } }} required>
-                                                <option value="" disabled>Select a vendor...</option>
-                                                {(Array.isArray(vendorList) ? vendorList : []).map((v) => { const displayName = v.company_name || v.contact_person || `Vendor #${v.id}`; return <option key={v.id} value={String(v.id)}>{displayName}</option> })}
-                                                <option disabled>──────────</option><option value="ADD_NEW">➕ Add New Vendor...</option>
-                                            </select>
-                                        )}
+                                        ) : renderVendorSelect(true)}
                                     </div>
                                     <div className="form-group">
                                         <label>Vendor Invoice #</label>
@@ -495,7 +499,13 @@ export default function Inventory() {
                                 <button className="close-btn" onClick={onClose}>&times;</button>
                             </div>
                             <form className="modal-form">
-                                <div className="form-row-margin">{renderTableGrid()}</div>
+                                <div className="form-row form-row-margin">
+                                    <div className="form-group vendor-group-max">
+                                        <label>Vendor (Supplier)</label>
+                                        {renderVendorSelect(false)}
+                                    </div>
+                                </div>
+                                {renderTableGrid()}
                                 <button type="button" onClick={addNewRow} className="btn-add-another">+ Add Another Product</button>
                                 <div className="modal-footer">
                                     <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
