@@ -671,3 +671,44 @@
   border-radius: 4px;
   transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.trend-tooltip {
+  background-color: #1C1917;
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  min-width: 170px;
+}
+
+.trend-tooltip-label {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #E7E5E4;
+}
+
+.trend-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.trend-tooltip-name {
+  font-weight: 600;
+}
+
+.trend-tooltip-revenue {
+  color: #FFFFFF;
+}
+
+.trend-tooltip-profit {
+  color: #D6C7C0;
+}
+
+.trend-tooltip-value {
+  color: #FFFFFF;
+  font-weight: 700;
+}

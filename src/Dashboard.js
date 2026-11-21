@@ -94,7 +94,7 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E7E5E4" />
                   <XAxis dataKey="date" tick={{ fill: '#78716C', fontSize: 12 }} />
                   <YAxis tick={{ fill: '#78716C', fontSize: 12 }} width={80} tickFormatter={(tick) => formatNumber(tick)} />
-                  <RechartsTooltip contentStyle={{ backgroundColor: '#1C1917', color: '#fff', borderRadius: '8px', border: 'none' }} formatter={(value) => `Rs. ${formatNumber(value)}`} />
+                  <RechartsTooltip content={<TrendTooltip />} />
                   <Line type="monotone" dataKey="daily_revenue" stroke="#1C1917" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Revenue" />
                   <Line type="monotone" dataKey="daily_profit" stroke="#BCA89F" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Profit" />
                 </LineChart>
@@ -307,3 +307,18 @@ const KpiCard = ({ title, value, icon, bgColor, onClick, isClickable, valueColor
     <div className="kpi-icon" style={{ backgroundColor: bgColor }}>{icon}</div>
   </div>
 );
+
+const TrendTooltip = ({ active, payload, label }) => {
+  if (!active || !payload || payload.length === 0) return null;
+  return (
+    <div className="trend-tooltip">
+      <p className="trend-tooltip-label">{label}</p>
+      {payload.map((entry) => (
+        <div className="trend-tooltip-row" key={entry.dataKey}>
+          <span className={`trend-tooltip-name ${entry.dataKey === 'daily_profit' ? 'trend-tooltip-profit' : 'trend-tooltip-revenue'}`}>{entry.name}</span>
+          <span className="trend-tooltip-value">Rs. {formatNumber(entry.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
